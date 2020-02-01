@@ -2,23 +2,23 @@
 <h1 align="center">:men_wrestling: exchange</h1>
 <p align="center">
 <!--  -->
-<a href="https://github.com/jujili/ex/releases"> <img src="https://img.shields.io/github/v/tag/jujili/ex?include_prereleases&sort=semver" alt="Release" title="Release"></a>
+<a href="https://github.com/jujili/exchange/releases"> <img src="https://img.shields.io/github/v/tag/jujili/exchange?include_prereleases&sort=semver" alt="Release" title="Release"></a>
 <!--  -->
-<a href="https://www.travis-ci.org/jujili/ex"><img src="https://www.travis-ci.org/jujili/ex.svg?branch=master"/></a>
+<a href="https://www.travis-ci.org/jujili/exchange"><img src="https://www.travis-ci.org/jujili/exchange.svg?branch=master"/></a>
 <!--  -->
-<a href="https://codecov.io/gh/jujili/ex"><img src="https://codecov.io/gh/jujili/ex/branch/master/graph/badge.svg"/></a>
+<a href="https://codecov.io/gh/jujili/exchange"><img src="https://codecov.io/gh/jujili/exchange/branch/master/graph/badge.svg"/></a>
 <!--  -->
-<a href="https://goreportcard.com/report/github.com/jujili/ex"><img src="https://goreportcard.com/badge/github.com/jujili/ex" alt="Go Report Card" title="Go Report Card"/></a>
+<a href="https://goreportcard.com/report/github.com/jujili/exchange"><img src="https://goreportcard.com/badge/github.com/jujili/exchange" alt="Go Report Card" title="Go Report Card"/></a>
 <!--  -->
-<a href="http://godoc.org/github.com/jujili/ex"><img src="https://img.shields.io/badge/godoc-ta-blue.svg" alt="Go Doc" title="Go Doc"/></a>
+<a href="http://godoc.org/github.com/jujili/exchange"><img src="https://img.shields.io/badge/godoc-exchange-blue.svg" alt="Go Doc" title="Go Doc"/></a>
 <!--  -->
 <br/>
 <!--  -->
-<a href="https://github.com/jujili/ex/blob/master/CHANGELOG.md"><img src="https://img.shields.io/badge/Change-Log-blueviolet.svg" alt="Change Log" title="Change Log"/></a>
+<a href="https://github.com/jujili/exchange/blob/master/CHANGELOG.md"><img src="https://img.shields.io/badge/Change-Log-blueviolet.svg" alt="Change Log" title="Change Log"/></a>
 <!--  -->
-<a href="https://golang.google.cn"><img src="https://img.shields.io/github/go-mod/go-version/jujili/ex" alt="Go Version" title="Go Version"/></a>
+<a href="https://golang.google.cn"><img src="https://img.shields.io/github/go-mod/go-version/jujili/exchange" alt="Go Version" title="Go Version"/></a>
 <!--  -->
-<a href="https://github.com/jujili/ex/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" title="MIT License"/></a>
+<a href="https://github.com/jujili/exchange/blob/master/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License" title="MIT License"/></a>
 <!--  -->
 <br/>
 <!--  -->
