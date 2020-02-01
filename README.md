@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD041 -->
-<h1 align="center">:men_wrestling: exchanges</h1>
+<h1 align="center">:men_wrestling: exchange</h1>
 <p align="center">
 <!--  -->
 <a href="https://github.com/jujili/ex/releases"> <img src="https://img.shields.io/github/v/tag/jujili/ex?include_prereleases&sort=semver" alt="Release" title="Release"></a>
@@ -30,7 +30,7 @@
 <!--  -->
 </p>
 
-ex 是对交易所 API 的封装。
+对交易所 API 的封装
 
 - [安装与更新](#%e5%ae%89%e8%a3%85%e4%b8%8e%e6%9b%b4%e6%96%b0)
 
@@ -39,5 +39,5 @@ ex 是对交易所 API 的封装。
 在命令行中输入以下内容，可以获取到最新版
 
 ```shell
-go get -u github.com/jujili/ex
+go get -u github.com/jujili/exchange
 ```
