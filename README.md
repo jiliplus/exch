@@ -30,11 +30,9 @@
 <!--  -->
 </p>
 
-ta 用于计算技术分析指标。
+ex 是对交易所 API 的封装。
 
 - [安装与更新](#%e5%ae%89%e8%a3%85%e4%b8%8e%e6%9b%b4%e6%96%b0)
-- [指标简介](#%e6%8c%87%e6%a0%87%e7%ae%80%e4%bb%8b)
-	- [EWMA](#ewma)
 
 ## 安装与更新
 
@@ -43,26 +41,3 @@ ta 用于计算技术分析指标。
 ```shell
 go get -u github.com/jujili/ex
 ```
-
-## 指标简介
-
-### EWMA
-
-[EWMA(指数移动平均，Exponentially Weighted Moving Average)](https://zh.wikipedia.org/zh-cn/%E7%A7%BB%E5%8B%95%E5%B9%B3%E5%9D%87#%E6%8C%87%E6%95%B8%E7%A7%BB%E5%8B%95%E5%B9%B3%E5%9D%87) 是一种求取时间序列均值的常用方法。其计算公式为
-
-> S<sub>t</sub> = α * Y<sub>t</sub> + (1 - α) * S<sub>t-1</sub>
-
-其中：
-
-- S<sub>t</sub>   : t 时刻的平均值
-- Y<sub>t</sub>   : t 时刻的实际值
-- α               : 最新值的加权值
-- S<sub>t-1</sub> : t-1 时刻的平均值
-
-与简单移动平均（simple moving average，SMA）和加权移动平均（weighted moving average，WMA）相比，旧数据的权重指数级别衰减。因此，新数据的权重更高，均值更接近于实际值。
-
-其中 α 也可以使用周期数 N 来表示：
-
-> α = 2/(N+1)
-
-通常 N = 5
