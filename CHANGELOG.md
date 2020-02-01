@@ -8,8 +8,8 @@
 
 ### 添加
 
-[最新更改]: https://github.com/jujili/ex/compare/v0.0.0...HEAD
-<!-- [0.1.0]: https://github.com/jujili/ex/compare/v0.0.0...v0.1.0 -->
+[最新更改]: https://github.com/jujili/exchange/compare/v0.0.0...HEAD
+<!-- [0.1.0]: https://github.com/jujili/exchange/compare/v0.0.0...v0.1.0 -->
 
 <!-- ### 添加 -->
 <!-- ### 变更 -->
