@@ -1,7 +1,7 @@
-package name
+package exch
 
-// Exchange 枚举了交易所的名称
-type Exchange string
+// Name 枚举了交易所的名称
+type Name string
 
 // 交易所的代号
 const (
@@ -21,16 +21,16 @@ const (
 	BITSTAMP = "BITSTAMP"
 
 	// China
-	CFFEX Exchange = "CFFEX" // China Financial Futures Exchange
-	SHFE           = "SHFE"  // Shanghai Futures Exchange
-	CZCE           = "CZCE"  // Zhengzhou Commodity Exchange
-	DCE            = "DCE"   // Dalian Commodity Exchange
-	INE            = "INE"   // Shanghai International Energy Exchange
-	SSE            = "SSE"   // Shanghai Stock Exchange
-	SZSE           = "SZSE"  // Shenzhen Stock Exchange
-	SGE            = "SGE"   // Shanghai Gold Exchange
-	WXE            = "WXE"   // Wuxi Steel Exchange
-	CFETS          = "CFETS" // China Foreign Exchange Trade System
+	CFFEX Name = "CFFEX" // China Financial Futures Exchange
+	SHFE       = "SHFE"  // Shanghai Futures Exchange
+	CZCE       = "CZCE"  // Zhengzhou Commodity Exchange
+	DCE        = "DCE"   // Dalian Commodity Exchange
+	INE        = "INE"   // Shanghai International Energy Exchange
+	SSE        = "SSE"   // Shanghai Stock Exchange
+	SZSE       = "SZSE"  // Shenzhen Stock Exchange
+	SGE        = "SGE"   // Shanghai Gold Exchange
+	WXE        = "WXE"   // Wuxi Steel Exchange
+	CFETS      = "CFETS" // China Foreign Exchange Trade System
 	// Global
 	SMART    = "SMART"    // Smart Router for US stocks
 	NYSE     = "NYSE"     // New York Stock Exchange
