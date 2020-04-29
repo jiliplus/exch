@@ -8,6 +8,7 @@ import (
 type Tick struct {
 	Exchange Name
 	Symbol   string
+	ID       int64
 	Date     time.Time
 	Price    float64
 	Volume   float64

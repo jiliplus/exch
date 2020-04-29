@@ -31,3 +31,9 @@ func newBar(begin time.Time, ticks []float64) Bar {
 		Close: close,
 	}
 }
+
+// TODO: 完成这个闭包函数
+func barGenFunc() {
+
+	return
+}
