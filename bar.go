@@ -17,25 +17,14 @@ type Bar struct {
 	Interval time.Duration
 }
 
-func newBar(tick *Tick, date time.Time) Bar {
-	return Bar{
+func newBar(tick *Tick, date time.Time) *Bar {
+	return &Bar{
 		Begin:  date,
 		Open:   tick.Price,
 		High:   tick.Price,
 		Low:    tick.Price,
 		Close:  tick.Price,
 		Volume: tick.Volume,
-	}
-}
-
-func newEmptyBar(bar *Bar, date time.Time) Bar {
-	return Bar{
-		Begin:  date,
-		Open:   bar.Close,
-		High:   bar.Close,
-		Low:    bar.Close,
-		Close:  bar.Close,
-		Volume: 0,
 	}
 }
 
@@ -50,20 +39,26 @@ func newEmptyBar(bar *Bar, date time.Time) Bar {
 //    返回上一个 bar
 // 4. 接收到下一个 interval 后面的 interval 的 tick，市场冷清，长时间没有交易
 //    返回多个 bar
-func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []Bar {
+func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
 	isInited := false
-	var bar Bar
-	var next time.Time
-	return func(tick *Tick) []Bar {
+	var bar *Bar
+	var lastTickDate time.Time
+	return func(tick *Tick) []*Bar {
 		tickBegin := begin(tick.Date, interval)
 		if !isInited {
 			bar = newBar(tick, tickBegin)
-			next = bar.Begin.Add(interval)
+			lastTickDate = tick.Date
 			isInited = true
 			return nil
 		}
 
-		if tickBegin.Before(next) {
+		// GenBar 不接受乱序的 ticks
+		if tick.Date.Before(lastTickDate) {
+			panic("GenBar: Ticks should be sorted in date")
+		}
+		lastTickDate = tick.Date
+
+		if tickBegin.Equal(bar.Begin) {
 			bar.High = maxFloat64(bar.High, tick.Price)
 			bar.Low = minFloat64(bar.Low, tick.Price)
 			bar.Close = tick.Price
@@ -71,10 +66,24 @@ func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []Bar {
 			return nil
 		}
 
-		res := make([]Bar, 0, 256)
-		for next.Before(tickBegin) {
-			next = next.Add(interval)
+		res := make([]*Bar, 0, 256)
+		for bar.Begin.Before(tickBegin) {
+			res = append(res, bar)
+			bar = nextEmptyBar(bar, interval)
 		}
 
+		bar = newBar(tick, tickBegin)
+
+		return res
+	}
+}
+
+func nextEmptyBar(bar *Bar, interval time.Duration) *Bar {
+	return &Bar{
+		Begin: bar.Begin.Add(interval),
+		Open:  bar.Close,
+		High:  bar.Close,
+		Low:   bar.Close,
+		Close: bar.Close,
 	}
 }
