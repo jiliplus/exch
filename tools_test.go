@@ -1,7 +1,12 @@
 package exch
 
 import (
+	"bytes"
+	"encoding/gob"
 	"testing"
+	"time"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func Test_maxFloat64(t *testing.T) {
@@ -76,5 +81,44 @@ func Test_minFloat64(t *testing.T) {
 				t.Errorf("minFloat64() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func Test_EncFunc(t *testing.T) {
+	Convey("生成 enc 以便于对变量进行编码", t, func() {
+		enc := EncFunc()
+		res := enc(true)
+		So(res, ShouldResemble, []byte{3, 2, 0, 1})
+		res = enc(false)
+		So(res, ShouldResemble, []byte{3, 2, 0, 0})
+		Convey("如果对 nil 编码会 panic", func() {
+			So(func() { enc(nil) }, ShouldPanic)
+		})
+	})
+}
+
+func Benchmark_EncFunc(b *testing.B) {
+	enc := EncFunc()
+	now := time.Now()
+	for i := 1; i < b.N; i++ {
+		enc(now)
+	}
+}
+
+// enc 返回的函数能够将输入转换成 []byte
+func enc(e interface{}) []byte {
+	var bb bytes.Buffer
+	enc := gob.NewEncoder(&bb)
+	err := enc.Encode(e)
+	if err != nil {
+		panic("gob encode error:" + err.Error())
+	}
+	return bb.Bytes()
+}
+
+func Benchmark_enc(b *testing.B) {
+	now := time.Now()
+	for i := 1; i < b.N; i++ {
+		enc(now)
 	}
 }
