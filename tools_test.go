@@ -97,14 +97,6 @@ func Test_EncFunc(t *testing.T) {
 	})
 }
 
-func Benchmark_EncFunc(b *testing.B) {
-	enc := EncFunc()
-	now := time.Now()
-	for i := 1; i < b.N; i++ {
-		enc(now)
-	}
-}
-
 // enc 返回的函数能够将输入转换成 []byte
 func enc(e interface{}) []byte {
 	var bb bytes.Buffer
@@ -116,7 +108,15 @@ func enc(e interface{}) []byte {
 	return bb.Bytes()
 }
 
-func Benchmark_enc(b *testing.B) {
+func Benchmark_Enc(b *testing.B) {
+	now := time.Now()
+	for i := 1; i < b.N; i++ {
+		enc(now)
+	}
+}
+
+func Benchmark_EncFunc(b *testing.B) {
+	enc := EncFunc()
 	now := time.Now()
 	for i := 1; i < b.N; i++ {
 		enc(now)

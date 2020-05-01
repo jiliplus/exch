@@ -7,7 +7,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func Test_DecTick(t *testing.T) {
+func Test_DecTickFunc(t *testing.T) {
 	Convey("反向序列化 Tick", t, func() {
 		expected := &Tick{
 			Exchange: OKEX,
@@ -19,7 +19,8 @@ func Test_DecTick(t *testing.T) {
 			Type:     "Type",
 		}
 		enc := EncFunc()
-		actual := DecTick(enc(expected))
+		dec := DecTickFunc()
+		actual := dec(enc(expected))
 		Convey("指针指向的对象应该不同", func() {
 			So(actual, ShouldNotEqual, expected)
 			Convey("具体的值，应该相同", func() {

@@ -1,6 +1,8 @@
 package exch
 
 import (
+	"bytes"
+	"encoding/gob"
 	"time"
 )
 
@@ -15,6 +17,21 @@ type Bar struct {
 	Exchange Name
 	// TODO: Interval 有必要吗
 	Interval time.Duration
+}
+
+// DecBarFunc 返回的函数会把序列化成 []byte 的 Balances 值转换回来
+func DecBarFunc() func(bs []byte) *Bar {
+	var bb bytes.Buffer
+	dec := gob.NewDecoder(&bb)
+	return func(bs []byte) *Bar {
+		bb.Reset()
+		bb.Write(bs)
+		var bar Bar
+		// dec.Decode 只有在输入不是指针时候，才会报错
+		// 显然 &balances 肯定是一个指针
+		dec.Decode(&bar)
+		return &bar
+	}
 }
 
 func newBar(tick *Tick, date time.Time) *Bar {

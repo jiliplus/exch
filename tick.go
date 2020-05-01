@@ -30,3 +30,18 @@ func DecTick(bs []byte) *Tick {
 	dec.Decode(&tick)
 	return &tick
 }
+
+// DecTickFunc 返回的函数会把序列化成 []byte 的 Balances 值转换回来
+func DecTickFunc() func(bs []byte) *Tick {
+	var bb bytes.Buffer
+	dec := gob.NewDecoder(&bb)
+	return func(bs []byte) *Tick {
+		bb.Reset()
+		bb.Write(bs)
+		var tick Tick
+		// dec.Decode 只有在输入不是指针时候，才会报错
+		// 显然 &balances 肯定是一个指针
+		dec.Decode(&tick)
+		return &tick
+	}
+}

@@ -67,3 +67,31 @@ func Test_GenBarFunc(t *testing.T) {
 		})
 	})
 }
+
+func Test_DecBarFunc(t *testing.T) {
+	Convey("反向序列化 Tick", t, func() {
+		expected := &Bar{
+			Begin:    time.Now(),
+			Open:     1,
+			High:     2,
+			Low:      3,
+			Close:    4,
+			Volume:   5,
+			Symbol:   "BTCUSDT",
+			Exchange: OKEX,
+			Interval: time.Minute,
+		}
+		enc := EncFunc()
+		dec := DecBarFunc()
+		actual := dec(enc(expected))
+		Convey("指针指向的对象应该不同", func() {
+			So(actual, ShouldNotEqual, expected)
+			Convey("具体的值，应该相同", func() {
+				So(actual.Begin.Equal(expected.Begin), ShouldBeTrue)
+				actual.Begin = expected.Begin
+				// 没有上面两行，直接使用下面的判断语句会报错，
+				So(*actual, ShouldResemble, *expected)
+			})
+		})
+	})
+}
