@@ -3,28 +3,33 @@ package exch
 import (
 	"bytes"
 	"encoding/gob"
-	"fmt"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func getABalances() *Balances {
+	a1 := &Asset{
+		Name:   "BTC",
+		Free:   100,
+		Locked: 200,
+	}
+	a2 := &Asset{
+		Name:   "DOGE",
+		Free:   900000000,
+		Locked: 200000000,
+	}
+	return NewBalances(a1, a2)
+}
+
 func Test_DecBalancesFunc(t *testing.T) {
+
 	Convey("测试 Balances 的 Decode 函数", t, func() {
-		expected := &Balances{
-			Asset: Asset{
-				Name:   "BTC",
-				Free:   100,
-				Locked: 0,
-				Price:  10000,
-			},
-			UE: "BTC",
-		}
+		expected := getABalances()
 		enc := EncFunc()
 		bs := enc(expected)
 		dec := DecBalancesFunc()
 		actual := dec(bs)
-		fmt.Println(actual)
 		So(*actual, ShouldResemble, *expected)
 	})
 }
@@ -41,14 +46,7 @@ func decBalances(bs []byte) *Balances {
 }
 
 func Benchmark_DecBalance(b *testing.B) {
-	bls := &Balances{
-		Asset: Asset{
-			Name:   "BTC",
-			Free:   100,
-			Locked: 0,
-		},
-		UE: "BTC",
-	}
+	bls := getABalances()
 	enc := EncFunc()
 	bs := enc(bls)
 	for i := 1; i < b.N; i++ {
@@ -57,14 +55,7 @@ func Benchmark_DecBalance(b *testing.B) {
 }
 
 func Benchmark_DecBalanceFunc(b *testing.B) {
-	bls := &Balances{
-		Asset: Asset{
-			Name:   "BTC",
-			Free:   100,
-			Locked: 0,
-		},
-		UE: "BTC",
-	}
+	bls := getABalances()
 	enc := EncFunc()
 	bs := enc(bls)
 	dec := DecBalancesFunc()
