@@ -8,17 +8,9 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func getABalances() *Balances {
-	a1 := &Asset{
-		Name:   "BTC",
-		Free:   100,
-		Locked: 200,
-	}
-	a2 := &Asset{
-		Name:   "DOGE",
-		Free:   900000000,
-		Locked: 200000000,
-	}
+func getABalances() *Balance {
+	a1 := NewAsset("BTC", 100, 200)
+	a2 := NewAsset("DOGE", 900000000, 100000000)
 	return NewBalances(a1, a2)
 }
 
@@ -28,15 +20,15 @@ func Test_DecBalancesFunc(t *testing.T) {
 		expected := getABalances()
 		enc := EncFunc()
 		bs := enc(expected)
-		dec := DecBalancesFunc()
+		dec := DecBalanceFunc()
 		actual := dec(bs)
 		So(*actual, ShouldResemble, *expected)
 	})
 }
 
 // decBalances 会把序列化成 []byte 的 Balances 值转换回来
-func decBalances(bs []byte) *Balances {
-	var balances Balances
+func decBalances(bs []byte) *Balance {
+	var balances Balance
 	bb := bytes.NewBuffer(bs)
 	dec := gob.NewDecoder(bb)
 	// Decode 只有在输入不是指针时候，才会报错
@@ -46,9 +38,9 @@ func decBalances(bs []byte) *Balances {
 }
 
 func Benchmark_DecBalance(b *testing.B) {
-	bls := getABalances()
+	bl := getABalances()
 	enc := EncFunc()
-	bs := enc(bls)
+	bs := enc(bl)
 	for i := 1; i < b.N; i++ {
 		decBalances(bs)
 	}
@@ -58,7 +50,7 @@ func Benchmark_DecBalanceFunc(b *testing.B) {
 	bls := getABalances()
 	enc := EncFunc()
 	bs := enc(bls)
-	dec := DecBalancesFunc()
+	dec := DecBalanceFunc()
 	for i := 1; i < b.N; i++ {
 		dec(bs)
 	}
