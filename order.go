@@ -10,24 +10,26 @@ type OrderSide bool
 
 // OrderType is side of order
 const (
-	Buy  OrderSide = false
-	Sell OrderSide = true
+	BUY  OrderSide = false
+	SELL OrderSide = true
 )
 
 // OrderType is type of order
 type OrderType uint8
 
 // OrderType is type of order
+// 类型值从 iota+1 也就是 1 开始
+// 是为了避开默认的 0 值
 const (
-	Limit OrderType = iota + 1
-	Market
+	LIMIT OrderType = iota + 1
+	MARKET
 	// 以下类型是从 binance 抄过来的
 	// https://binance-docs.github.io/apidocs/spot/cn/#trade
-	StopLoss
-	StopLossLimit
-	TakeProfit
-	TakeProfitLimit
-	LimitMaker
+	STOPloss
+	STOPlossLIMIT
+	TAKEprofit
+	TAKEprofitLIMIT
+	LIMITmaker
 )
 
 // Order 是下单的格式
@@ -36,28 +38,55 @@ type Order struct {
 	Symbol      string
 	AssetName   string
 	CapitalName string
-	ID          int64
+	ID          int64 // negative value means unset
 	Side        OrderSide
+	Type        OrderType
 	// 根据 Type 的不同，以下 3 个属性不是全都必须的
 	AssetQuantity   float64
 	AssetPrice      float64
 	CapitalQuantity float64
 }
 
-// NewOrder returns a new order
-// TODO: 解决 NewOrder 参数过多的问题
-// 可以参考：
-// https://github.com/xxjwxc/uber_go_guide_cn#%E5%8A%9F%E8%83%BD%E9%80%89%E9%A1%B9
-func NewOrder(symbol, asset, capital string, ID int64, side OrderSide, assetQuantity, assetPrice, capitalQuantity float64) *Order {
-	return &Order{
-		Symbol:          symbol,
-		AssetName:       asset,
-		CapitalName:     capital,
-		ID:              ID,
-		Side:            side,
-		AssetQuantity:   assetQuantity,
-		AssetPrice:      assetPrice,
-		CapitalQuantity: capitalQuantity,
+// NewOrder returns a order with default Symbol, Asset, Capital.
+// return value is INCOMPLETE.
+// It need run 'With' method to make a complete copy.
+func NewOrder(symbol, asset, capital string) Order {
+	return Order{
+		Symbol:      symbol,
+		AssetName:   asset,
+		CapitalName: capital,
+		ID:          -1,
+	}
+}
+
+// With 可以生成一个根据 apply 实施的新订单
+func (o Order) With(apply func(*Order)) *Order {
+	res := o // deep copy
+	apply(&res)
+	return &res
+}
+
+// Limit 会按照限价单的方式设置订单
+func Limit(side OrderSide, quantity, price float64) func(*Order) {
+	return func(o *Order) {
+		o.Type = LIMIT
+		o.Side = side
+		o.AssetQuantity = quantity
+		o.AssetPrice = price
+	}
+}
+
+// Market 会按照市价单的方式设置订单
+func Market(side OrderSide, quantity float64) func(*Order) {
+	return func(o *Order) {
+		o.Type = MARKET
+		o.Side = side
+		switch side {
+		case BUY:
+			o.CapitalQuantity = quantity
+		case SELL:
+			o.AssetQuantity = quantity
+		}
 	}
 }
 
@@ -72,4 +101,8 @@ func DecOrderFunc() func(bs []byte) *Order {
 		dec.Decode(&order)
 		return &order
 	}
+}
+
+type cancelOrder struct {
+	ID int64
 }
