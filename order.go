@@ -35,13 +35,13 @@ const (
 func (t OrderType) String() string {
 	switch t {
 	case LIMIT:
-		return "限价单"
+		return "LIMIT"
 	case MARKET:
-		return "市价单"
+		return "MARKET"
 	case STOPloss:
-		return "止损单"
+		return "STOP_LOSS"
 	case STOPlossLIMIT:
-		return "现价止损单"
+		return "STOP_LOSS_LIMIT"
 	case TAKEprofit:
 		return "TAKE_PROFIT"
 	case TAKEprofitLIMIT:
