@@ -32,6 +32,27 @@ const (
 	LIMITmaker
 )
 
+func (t OrderType) String() string {
+	switch t {
+	case LIMIT:
+		return "限价单"
+	case MARKET:
+		return "市价单"
+	case STOPloss:
+		return "止损单"
+	case STOPlossLIMIT:
+		return "现价止损单"
+	case TAKEprofit:
+		return "TAKE_PROFIT"
+	case TAKEprofitLIMIT:
+		return "TAKE_PROFIT_LIMIT"
+	case LIMITmaker:
+		return "LIMIT_MAKER"
+	default:
+		panic("meet UNKNOWN Order Type")
+	}
+}
+
 // Order 是下单的格式
 // TODO: 下单的 order 和挂单的 order 有什么区别吗？
 type Order struct {

@@ -47,3 +47,9 @@ func Test_DecOrderFunc(t *testing.T) {
 		})
 	})
 }
+
+func Test_OrderType_String(t *testing.T) {
+	Convey("", t, func() {
+
+	})
+}
