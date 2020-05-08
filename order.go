@@ -3,16 +3,28 @@ package exch
 import (
 	"bytes"
 	"encoding/gob"
+	"time"
 )
 
 // OrderSide is side of order
-type OrderSide bool
+type OrderSide uint8
 
 // OrderType is side of order
 const (
-	BUY  OrderSide = false
-	SELL OrderSide = true
+	BUY OrderSide = iota + 1
+	SELL
 )
+
+func (t OrderSide) String() string {
+	switch t {
+	case BUY:
+		return "BUY"
+	case SELL:
+		return "SELL"
+	default:
+		panic("meet UNKNOWN Order Side")
+	}
+}
 
 // OrderType is type of order
 type OrderType uint8
@@ -59,9 +71,11 @@ type Order struct {
 	Symbol      string
 	AssetName   string
 	CapitalName string
-	ID          int64 // negative value means unset
-	Side        OrderSide
-	Type        OrderType
+	// if ID is negative value, means unset
+	// ID is time.Now().Unix()
+	ID   int64
+	Side OrderSide
+	Type OrderType
 	// 根据 Type 的不同，以下 3 个属性不是全都必须的
 	AssetQuantity   float64
 	AssetPrice      float64
@@ -84,6 +98,7 @@ func NewOrder(symbol, asset, capital string) Order {
 func (o Order) With(apply func(*Order)) *Order {
 	res := o // deep copy
 	apply(&res)
+	res.ID = time.Now().Unix()
 	return &res
 }
 
@@ -122,6 +137,19 @@ func DecOrderFunc() func(bs []byte) *Order {
 		dec.Decode(&order)
 		return &order
 	}
+}
+
+// IsLessThan return true if o < a
+func (o *Order) IsLessThan(a *Order) bool {
+	if o.Side != a.Side {
+		panic("only compare with the same side")
+	}
+	if o.Side == BUY {
+		if o.Type == LIMIT && a.Type == LIMIT {
+			return o.ID < a.ID
+		}
+	}
+	return true
 }
 
 type cancelOrder struct {

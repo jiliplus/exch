@@ -72,26 +72,51 @@ func Test_OrderType_String(t *testing.T) {
 			})
 		}
 	})
-
 	Convey("遇到未定义的 OrderType 会 panic", t, func() {
 		So(func() { _ = OrderType(0).String() }, ShouldPanic)
 	})
-
 }
 
-func TestOrderType_String(t *testing.T) {
-	tests := []struct {
-		name string
-		t    OrderType
-		want string
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.t.String(); got != tt.want {
-				t.Errorf("OrderType.String() = %v, want %v", got, tt.want)
-			}
+func Test_OrderSide_String(t *testing.T) {
+	Convey("测试 OrderSide 的字符化", t, func() {
+		tests := []struct {
+			name     string
+			t        OrderSide
+			expected string
+		}{
+			{"BUY", BUY, "BUY"},
+			{"SELL", SELL, "SELL"},
+		}
+		for _, tt := range tests {
+			title := fmt.Sprintf("测试 %s", tt.name)
+			Convey(title, func() {
+				actual := tt.t.String()
+				So(actual, ShouldEqual, tt.expected)
+			})
+		}
+	})
+	Convey("遇到未定义的 OrderSide 会 panic", t, func() {
+		So(func() { _ = OrderSide(0).String() }, ShouldPanic)
+	})
+}
+
+func Test_Order_IsLessThan(t *testing.T) {
+	Convey("Order less function", t, func() {
+		BtcUsdtOrder := NewOrder("BTCUSDT", "BTC", "USDT")
+		Convey("比较不同 side 的 order 会 panic", func() {
+			lb := BtcUsdtOrder.With(Limit(BUY, 100, 100000))
+			ms := BtcUsdtOrder.With(Market(SELL, 100))
+			So(func() { lb.IsLessThan(ms) }, ShouldPanic)
 		})
-	}
+		Convey("BUY side 的 order", func() {
+			lb0 := BtcUsdtOrder.With(Limit(BUY, 100, 100000))
+			var temp Order
+			temp := *lb0
+			lb1 := BtcUsdtOrder.With(Limit(BUY, 100, 100000))
+			Convey("同为 limit 类型，则按照 ID 升序排列", func() {
+				So(lb0.IsLessThan(lb1), ShouldBeTrue)
+				So(lb1.IsLessThan(lb0), ShouldBeFalse)
+			})
+		})
+	})
 }
