@@ -144,12 +144,23 @@ func (o *Order) IsLessThan(a *Order) bool {
 	if o.Side != a.Side {
 		panic("only compare with the same side")
 	}
-	if o.Side == BUY {
-		if o.Type == LIMIT && a.Type == LIMIT {
-			return o.ID < a.ID
-		}
+	if o.Type == MARKET && a.Type == MARKET {
+		return o.ID < a.ID
 	}
-	return true
+	if o.Type == MARKET && a.Type == LIMIT {
+		return true
+	}
+	if o.Type == LIMIT && a.Type == MARKET {
+		return false
+	}
+	// o.Type == LIMIT && a.Type == LIMIT
+	if o.Side == BUY {
+		// BUY 订单是价高的先成交
+		return o.AssetPrice > a.AssetPrice
+	}
+	// o.Side == SELL
+	// SELL 订单是价低的先成交
+	return o.AssetPrice < a.AssetPrice
 }
 
 type cancelOrder struct {

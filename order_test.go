@@ -109,13 +109,47 @@ func Test_Order_IsLessThan(t *testing.T) {
 			So(func() { lb.IsLessThan(ms) }, ShouldPanic)
 		})
 		Convey("BUY side 的 order", func() {
-			lb0 := BtcUsdtOrder.With(Limit(BUY, 100, 100000))
-			var temp Order
-			temp := *lb0
+			mb0 := BtcUsdtOrder.With(Market(BUY, 10000))
+			temp := *mb0
+			temp.ID++
+			mb1 := &temp
+			lb0 := BtcUsdtOrder.With(Limit(BUY, 100, 110000))
 			lb1 := BtcUsdtOrder.With(Limit(BUY, 100, 100000))
-			Convey("同为 limit 类型，则按照 ID 升序排列", func() {
+			Convey("同为 MARKET 类型，则按照 ID 升序排列", func() {
+				So(mb0.IsLessThan(mb1), ShouldBeTrue)
+				So(mb1.IsLessThan(mb0), ShouldBeFalse)
+			})
+			Convey("同为 LIMIT 类型，则按照 AssetPrice 降序排列", func() {
 				So(lb0.IsLessThan(lb1), ShouldBeTrue)
 				So(lb1.IsLessThan(lb0), ShouldBeFalse)
+			})
+			Convey("MARKET 永远排在 LIMIT 前面", func() {
+				So(mb0.IsLessThan(lb0), ShouldBeTrue)
+				So(mb1.IsLessThan(lb1), ShouldBeTrue)
+				So(lb0.IsLessThan(mb0), ShouldBeFalse)
+				So(lb1.IsLessThan(mb1), ShouldBeFalse)
+			})
+		})
+		Convey("SELL side 的 order", func() {
+			ms0 := BtcUsdtOrder.With(Market(SELL, 100))
+			temp := *ms0
+			temp.ID++
+			ms1 := &temp
+			ls0 := BtcUsdtOrder.With(Limit(SELL, 100, 100000))
+			ls1 := BtcUsdtOrder.With(Limit(SELL, 100, 110000))
+			Convey("同为 MARKET 类型，则按照 ID 升序排列", func() {
+				So(ms0.IsLessThan(ms1), ShouldBeTrue)
+				So(ms1.IsLessThan(ms0), ShouldBeFalse)
+			})
+			Convey("同为 LIMIT 类型，则按照 AssetPrice 升序排列", func() {
+				So(ls0.IsLessThan(ls1), ShouldBeTrue)
+				So(ls1.IsLessThan(ls0), ShouldBeFalse)
+			})
+			Convey("MARKET 永远排在 LIMIT 前面", func() {
+				So(ms0.IsLessThan(ls0), ShouldBeTrue)
+				So(ms1.IsLessThan(ls1), ShouldBeTrue)
+				So(ls0.IsLessThan(ms0), ShouldBeFalse)
+				So(ls1.IsLessThan(ms1), ShouldBeFalse)
 			})
 		})
 	})
