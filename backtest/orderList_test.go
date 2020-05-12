@@ -206,6 +206,7 @@ func Test_order_match(t *testing.T) {
 				price := 10000.
 				tick := exch.NewTick(1, time.Now(), price, mb.CapitalQuantity/price*10)
 				delta := mb.AssetQuantity / tick.Price
+				So(delta, ShouldNotEqual, 0)
 				newVolume := tick.Volume - delta
 				mb.match(tick)
 				// as := mb.match(tick)
