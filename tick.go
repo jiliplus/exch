@@ -11,14 +11,24 @@ import (
 // 要么直接使用 Tick，
 // 要么提供转换到 Tick 函数，
 type Tick struct {
-	Exchange  Name
-	Symbol    string // like "BTCUSDT"
-	AssetName string // like "BTC"
-	ID        int64
-	Date      time.Time
-	Price     float64
-	Volume    float64
-	Type      string
+	// Exchange Name
+	// Symbol    string // like "BTCUSDT"
+	// Asset  string // like "BTC"
+	ID     int64
+	Date   time.Time
+	Price  float64
+	Volume float64
+	// Type   string
+}
+
+// NewTick returns a new tick
+func NewTick(id int64, date time.Time, price, volume float64) *Tick {
+	return &Tick{
+		ID:     id,
+		Date:   date,
+		Price:  price,
+		Volume: volume,
+	}
 }
 
 // DecTickFunc 返回的函数会把序列化成 []byte 的 Balances 值转换回来

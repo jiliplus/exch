@@ -160,11 +160,13 @@ func (o *Order) IsLessThan(a *Order) bool {
 	// o.Type == LIMIT && a.Type == LIMIT
 	// BUY 订单是价高的先成交
 	if o.Side == BUY {
-		return o.AssetPrice > a.AssetPrice
+		return o.AssetPrice > a.AssetPrice ||
+			(o.AssetPrice == a.AssetPrice && o.ID < a.ID)
 	}
 	// o.Side == SELL
 	// SELL 订单是价低的先成交
-	return o.AssetPrice < a.AssetPrice
+	return o.AssetPrice < a.AssetPrice ||
+		(o.AssetPrice == a.AssetPrice && o.ID < a.ID)
 }
 
 type cancelOrder struct {

@@ -8,7 +8,7 @@ import (
 )
 
 func Test_DecOrderFunc(t *testing.T) {
-	Convey("反向序列化 Tick", t, func() {
+	Convey("反向序列化 Order", t, func() {
 		order := NewOrder("BTCUSDT", "BTC", "USDT")
 		Convey("Limit", func() {
 			expected := order.With(Limit(BUY, 100, 10000))

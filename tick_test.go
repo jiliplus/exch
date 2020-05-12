@@ -10,13 +10,13 @@ import (
 func Test_DecTickFunc(t *testing.T) {
 	Convey("反向序列化 Tick", t, func() {
 		expected := &Tick{
-			Exchange: OKEX,
-			Symbol:   "BTCUSDT",
-			ID:       110,
-			Date:     time.Now(),
-			Price:    1222,
-			Volume:   100,
-			Type:     "Type",
+			// Exchange: OKEX,
+			// Symbol:   "BTCUSDT",
+			ID:     110,
+			Date:   time.Now(),
+			Price:  1222,
+			Volume: 100,
+			// Type:   "Type",
 		}
 		enc := EncFunc()
 		dec := DecTickFunc()
