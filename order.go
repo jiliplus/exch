@@ -140,22 +140,26 @@ func DecOrderFunc() func(bs []byte) *Order {
 }
 
 // IsLessThan return true if o < a
+// REVIEW: 当 Order 的 Type 增加以后，这个方法会爆炸。
 func (o *Order) IsLessThan(a *Order) bool {
 	if o.Side != a.Side {
 		panic("only compare with the same side")
 	}
+	// MARKET 订单按照先后顺序排列
 	if o.Type == MARKET && a.Type == MARKET {
 		return o.ID < a.ID
 	}
+	// MARKET 订单始终排在 LIMIT 订单前面
 	if o.Type == MARKET && a.Type == LIMIT {
 		return true
 	}
+	// MARKET 订单始终排在 LIMIT 订单前面
 	if o.Type == LIMIT && a.Type == MARKET {
 		return false
 	}
 	// o.Type == LIMIT && a.Type == LIMIT
+	// BUY 订单是价高的先成交
 	if o.Side == BUY {
-		// BUY 订单是价高的先成交
 		return o.AssetPrice > a.AssetPrice
 	}
 	// o.Side == SELL
