@@ -119,14 +119,36 @@ func (l *orderList) canMatch(price float64) bool {
 // 对于每个 tick 总是认为可以撮合成功，形成交易的。
 // 这里没有考虑手续费和滑点。
 func (o *order) match(tick *exch.Tick) []exch.Asset {
-	if o.Type == exch.MARKET {
-		if o.Side == exch.BUY {
-			if o.AssetQuantity <= tick.Price*tick.Volume {
-
-				tick = nil
+	var add, lost exch.Asset
+	if o.Side == exch.BUY {
+		add.Name = o.AssetName
+		lost.Name = o.CapitalName
+		if o.Type == exch.MARKET {
+			// 市价单以 tick 的价格成交
+			if o.CapitalQuantity <= tick.Price*tick.Volume {
+				add.Free = o.CapitalQuantity / tick.Price
+				lost.Locked = -o.CapitalQuantity
+				tick.Volume -= add.Free
+				// o 会被丢弃，无需对其进行修改
+			} else {
+				add.Free = tick.Volume
+				lost.Locked = -tick.Price * tick.Volume
+				tick.Volume = 0
+				// o 还要放回 orderList，所以需要对其进行修改
+				o.CapitalQuantity += lost.Locked
 			}
-
+		} else { // o.Type == exch.LIMIT
+			// 限价单以 order 的价格成交
+			if tick.Price <= o.AssetPrice {
+				if tick.Volume < o.AssetQuantity {
+					add.Free = tick.Volume
+					lost.Locked = -o.AssetPrice * tick.Volume
+					tick.Volume = 0
+					// o 还要放回 orderList，所以需要对其进行修改
+					o.AssetQuantity -= add.Free
+				}
+			}
 		}
 	}
-	return nil
+	return []exch.Asset{add, lost}
 }
