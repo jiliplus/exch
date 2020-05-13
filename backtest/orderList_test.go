@@ -273,6 +273,10 @@ func Test_order_match(t *testing.T) {
 					})
 				})
 			})
+			So(add.Name, ShouldEqual, BtcUsdtOrder.AssetName)
+			So(add.Locked, ShouldEqual, 0)
+			So(lost.Name, ShouldEqual, BtcUsdtOrder.CapitalName)
+			So(lost.Free, ShouldEqual, 0)
 		})
 		Convey("SELL 单时", func() {
 			Convey("市价单以 tick 的价格撮合", func() {
@@ -280,8 +284,8 @@ func Test_order_match(t *testing.T) {
 				price := 10000.
 				Convey("order 的金额 <= tick 的交易额", func() {
 					tick := exch.NewTick(1, time.Now(), price, ms.CapitalQuantity/price*10)
-					expectedAddFree := ms.CapitalQuantity / tick.Price
-					expectedLostLocked := -ms.CapitalQuantity
+					expectedAddFree := ms.CapitalQuantity * tick.Price
+					expectedLostLocked := -ms.AssetQuantity
 					expectedVolume := tick.Volume - expectedAddFree
 					as := ms.match(tick)
 					So(tick.Volume, ShouldEqual, expectedVolume)
@@ -348,9 +352,9 @@ func Test_order_match(t *testing.T) {
 					})
 				})
 			})
-			So(add.Name, ShouldEqual, BtcUsdtOrder.AssetName)
+			So(add.Name, ShouldEqual, BtcUsdtOrder.CapitalName)
 			So(add.Locked, ShouldEqual, 0)
-			So(lost.Name, ShouldEqual, BtcUsdtOrder.CapitalName)
+			So(lost.Name, ShouldEqual, BtcUsdtOrder.AssetName)
 			So(lost.Free, ShouldEqual, 0)
 		})
 	})
