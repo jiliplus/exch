@@ -140,7 +140,46 @@ func (o *order) match(tick *exch.Tick) []exch.Asset {
 		} else { // o.Type == exch.LIMIT
 			// 限价单以 order 的价格成交
 			if tick.Price <= o.AssetPrice {
-				if tick.Volume < o.AssetQuantity {
+				if tick.Volume >= o.AssetQuantity {
+					add.Free = o.AssetQuantity
+					lost.Locked = -o.AssetPrice * add.Free
+					tick.Volume -= o.AssetQuantity
+					// o 会被丢弃，无需对其进行修改
+				} else {
+					add.Free = tick.Volume
+					lost.Locked = -o.AssetPrice * tick.Volume
+					tick.Volume = 0
+					// o 还要放回 orderList，所以需要对其进行修改
+					o.AssetQuantity -= add.Free
+				}
+			}
+		}
+	} else { // o.Side == exch.SELL
+		add.Name = o.AssetName
+		lost.Name = o.CapitalName
+		if o.Type == exch.MARKET {
+			// 市价单以 tick 的价格成交
+			if o.CapitalQuantity <= tick.Price*tick.Volume {
+				add.Free = o.CapitalQuantity / tick.Price
+				lost.Locked = -o.CapitalQuantity
+				tick.Volume -= add.Free
+				// o 会被丢弃，无需对其进行修改
+			} else {
+				add.Free = tick.Volume
+				lost.Locked = -tick.Price * tick.Volume
+				tick.Volume = 0
+				// o 还要放回 orderList，所以需要对其进行修改
+				o.CapitalQuantity += lost.Locked
+			}
+		} else { // o.Type == exch.LIMIT
+			// 限价单以 order 的价格成交
+			if tick.Price >= o.AssetPrice {
+				if tick.Volume >= o.AssetQuantity {
+					add.Free = o.AssetQuantity
+					lost.Locked = -o.AssetPrice * add.Free
+					tick.Volume -= o.AssetQuantity
+					// o 会被丢弃，无需对其进行修改
+				} else {
 					add.Free = tick.Volume
 					lost.Locked = -o.AssetPrice * tick.Volume
 					tick.Volume = 0

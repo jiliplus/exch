@@ -244,7 +244,20 @@ func Test_order_match(t *testing.T) {
 					So(*tick, ShouldResemble, expectedTick)
 				})
 				Convey("tick 的价格 <= order 的价格", func() {
-					tick := exch.NewTick(1, time.Now(), price, 10)
+					lowerPrice := price - 1
+					tick := exch.NewTick(1, time.Now(), lowerPrice, 10)
+					Convey("tick.Volume >= order.AssetQuantity", func() {
+						diff := 1.25
+						So(diff, ShouldBeGreaterThan, 0)
+						tick.Volume = lb.AssetQuantity + diff
+						expectedAddFree := lb.AssetQuantity
+						expectedLostLocked := -lb.AssetPrice * expectedAddFree
+						as := lb.match(tick)
+						So(tick.Volume, ShouldEqual, diff)
+						add, lost = as[0], as[1]
+						So(add.Free, ShouldEqual, expectedAddFree)
+						So(lost.Locked, ShouldEqual, expectedLostLocked)
+					})
 					Convey("tick.Volume < order.AssetQuantity", func() {
 						diff := 0.5
 						So(diff, ShouldBeLessThan, lb.AssetQuantity)
@@ -258,8 +271,80 @@ func Test_order_match(t *testing.T) {
 						So(lost.Locked, ShouldEqual, expectedLostLocked)
 						So(lb.AssetQuantity, ShouldEqual, diff)
 					})
-					Convey("从这里开始", func() {
-						So(true, ShouldEqual, false)
+				})
+			})
+		})
+		Convey("SELL 单时", func() {
+			Convey("市价单以 tick 的价格撮合", func() {
+				ms := de(BtcUsdtOrder.With(exch.Market(exch.SELL, 100000)))
+				price := 10000.
+				Convey("order 的金额 <= tick 的交易额", func() {
+					tick := exch.NewTick(1, time.Now(), price, ms.CapitalQuantity/price*10)
+					expectedAddFree := ms.CapitalQuantity / tick.Price
+					expectedLostLocked := -ms.CapitalQuantity
+					expectedVolume := tick.Volume - expectedAddFree
+					as := ms.match(tick)
+					So(tick.Volume, ShouldEqual, expectedVolume)
+					So(len(as), ShouldEqual, 2)
+					add, lost = as[0], as[1]
+					So(add.Free, ShouldEqual, expectedAddFree)
+					So(lost.Locked, ShouldEqual, expectedLostLocked)
+				})
+				Convey("order 的金额大于 tick 的交易额", func() {
+					tick := exch.NewTick(1, time.Now(), price, ms.CapitalQuantity/price/2)
+					expectedAddFree := tick.Volume
+					expectedLostLocked := -tick.Price * tick.Volume
+					expectedOrderCapitalQuantity := ms.CapitalQuantity + expectedLostLocked
+					as := ms.match(tick)
+					So(tick.Volume, ShouldEqual, 0)
+					So(ms.CapitalQuantity, ShouldEqual, expectedOrderCapitalQuantity)
+					So(len(as), ShouldEqual, 2)
+					add, lost = as[0], as[1]
+					So(add.Free, ShouldEqual, expectedAddFree)
+					So(lost.Locked, ShouldEqual, expectedLostLocked)
+				})
+			})
+			Convey("限价单以 order 的价格进行撮合", func() {
+				price := 10000.
+				ls := de(BtcUsdtOrder.With(exch.Limit(exch.SELL, 100, price)))
+				Convey("tick 的价格 < order 的价格", func() {
+					lowerPrice := price - 1
+					tick := exch.NewTick(1, time.Now(), lowerPrice, 10)
+					expectedTick := *tick
+					So(&expectedTick, ShouldNotEqual, tick)
+					as := ls.match(tick)
+					add, lost = as[0], as[1]
+					Convey("不会对 tick 进行修改", func() {
+						So(*tick, ShouldResemble, expectedTick)
+					})
+				})
+				Convey("tick 的价格 >= order 的价格", func() {
+					higherPrice := price + 1
+					tick := exch.NewTick(1, time.Now(), higherPrice, 0)
+					Convey("tick.Volume >= order.AssetQuantity", func() {
+						diff := 1.25
+						So(diff, ShouldBeGreaterThan, 0)
+						tick.Volume = ls.AssetQuantity + diff
+						expectedAddFree := ls.AssetQuantity
+						expectedLostLocked := -ls.AssetPrice * expectedAddFree
+						as := ls.match(tick)
+						So(tick.Volume, ShouldEqual, diff)
+						add, lost = as[0], as[1]
+						So(add.Free, ShouldEqual, expectedAddFree)
+						So(lost.Locked, ShouldEqual, expectedLostLocked)
+					})
+					Convey("tick.Volume < order.AssetQuantity", func() {
+						diff := 0.5
+						So(diff, ShouldBeLessThan, ls.AssetQuantity)
+						tick.Volume = ls.AssetQuantity - diff
+						expectedAddFree := tick.Volume
+						expectedLostLocked := -tick.Volume * ls.AssetPrice
+						as := ls.match(tick)
+						So(tick.Volume, ShouldEqual, 0)
+						So(ls.AssetQuantity, ShouldEqual, diff)
+						add, lost = as[0], as[1]
+						So(add.Free, ShouldEqual, expectedAddFree)
+						So(lost.Locked, ShouldEqual, expectedLostLocked)
 					})
 				})
 			})
