@@ -7,12 +7,12 @@ import (
 )
 
 // OrderSide is side of order
-type OrderSide uint8
+type OrderSide int8
 
 // OrderType is side of order
 const (
-	BUY OrderSide = iota + 1
-	SELL
+	BUY  OrderSide = 1
+	SELL OrderSide = -1
 )
 
 func (t OrderSide) String() string {
@@ -32,9 +32,11 @@ type OrderType uint8
 // OrderType is type of order
 // 类型值从 iota+1 也就是 1 开始
 // 是为了避开默认的 0 值
+// OrderType 也代表了 match 时的优先顺序
 const (
-	LIMIT OrderType = iota + 1
-	MARKET
+	MARKET OrderType = iota + 1
+	LIMIT
+
 	// 以下类型是从 binance 抄过来的
 	// https://binance-docs.github.io/apidocs/spot/cn/#trade
 	STOPloss
