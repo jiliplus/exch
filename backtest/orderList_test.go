@@ -34,7 +34,7 @@ func Test_DecOrderFunc(t *testing.T) {
 	})
 }
 
-func Test_Order_IsLessThan(t *testing.T) {
+func Test_order_isLessThan(t *testing.T) {
 	enc := exch.EncFunc()
 	dec := decOrderFunc()
 	de := func(i interface{}) *order {
@@ -93,6 +93,17 @@ func Test_Order_IsLessThan(t *testing.T) {
 				So(ms1.isLessThan(ls1), ShouldBeTrue)
 				So(ls0.isLessThan(ms0), ShouldBeFalse)
 				So(ls1.isLessThan(ms1), ShouldBeFalse)
+			})
+		})
+		Convey("现在只能比较 LIMIT 和 MARKET", func() {
+			ms := de(BtcUsdtOrder.With(exch.Market(exch.SELL, 100)))
+			ms.Type = exch.STOPloss
+			ls := de(BtcUsdtOrder.With(exch.Limit(exch.SELL, 100, 100000)))
+			ls.Type = exch.STOPloss
+			Convey("强行比较会 panic", func() {
+				So(func() {
+					ms.isLessThan(ls)
+				}, ShouldPanic)
 			})
 		})
 	})

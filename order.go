@@ -11,8 +11,13 @@ type OrderSide int8
 
 // OrderType is side of order
 const (
-	BUY  OrderSide = 1
-	SELL OrderSide = -1
+	// 在 LIMIT 类型的订单排序中，因为
+	// SELL 方是 低 价优先成交
+	// BUY  方是 高 价优先成交
+	// 让 BUY 成为 -1 的话，可以让
+	// order.Side * order.Price 都是从低到高的排序
+	SELL OrderSide = 1
+	BUY  OrderSide = -1
 )
 
 func (t OrderSide) String() string {
