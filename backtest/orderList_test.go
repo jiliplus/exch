@@ -2,6 +2,7 @@ package backtest
 
 import (
 	"testing"
+	"time"
 
 	"github.com/jujili/exch"
 	. "github.com/smartystreets/goconvey/convey"
@@ -399,17 +400,6 @@ func Test_orderList_canMatch(t *testing.T) {
 			return dec(enc(i))
 		}
 		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
-		// ol := newOrderList()
-		// ol.push(lb1)
-		// mb1 := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
-		// ol.push(mb1)
-		// mb2 := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
-		// mb2.ID++
-		// ol.push(mb2)
-		// temp := *lb1
-		// temp.AssetPrice -= 10000
-		// lb2 := &temp
-		// ol.push(lb2)
 		ol := newOrderList()
 		Convey("空的 orderList 不会匹配", func() {
 			So(ol.canMatch(0), ShouldBeFalse)
@@ -441,6 +431,95 @@ func Test_orderList_canMatch(t *testing.T) {
 			})
 			Convey("对更低的价格**不能够**匹配", func() {
 				So(ol.canMatch(price*0.99), ShouldBeFalse)
+			})
+		})
+	})
+}
+
+func Test_order_canMatch(t *testing.T) {
+	Convey("检测 order.canMatch", t, func() {
+		Convey("nil.canMatch 会返回 false", func() {
+			var nilOrder *order
+			So(nilOrder.canMatch(1), ShouldBeFalse)
+		})
+		Convey("现在只能检测 LIMIT 和 MARKET 类型的 order", func() {
+			order := &order{}
+			order.Type = exch.OrderType(3)
+			So(func() {
+				order.canMatch(1)
+			}, ShouldPanic)
+		})
+	})
+}
+
+func Test_matchMarket(t *testing.T) {
+	Convey("matchMarket 撮合市价单", t, func() {
+		enc := exch.EncFunc()
+		dec := decOrderFunc()
+		de := func(i interface{}) *order {
+			return dec(enc(i))
+		}
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		Convey("输入别的类型的 order 会 panic", func() {
+			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, 100, 100000)))
+			So(lb.Type, ShouldNotEqual, exch.MARKET)
+			So(func() {
+				matchMarket(lb, nil)
+			}, ShouldPanic)
+		})
+		Convey("SELL 时", func() {
+			check := func(od *order, tk *exch.Tick, assetRemain, volumeRemain, volume, amount float64) {
+				as := matchMarket(od, tk)
+				Convey("order.AssetQuantity 应该等于 assetRemain", func() {
+					So(od.AssetQuantity, ShouldEqual, assetRemain)
+				})
+				Convey("tick.Volume 应该为 volumeRemain", func() {
+					So(tk.Volume, ShouldEqual, volumeRemain)
+				})
+				asset, capital := as[0], as[1]
+				Convey("asset.Locked 应该等于 -volume", func() {
+					So(asset.Locked, ShouldEqual, -volume)
+				})
+				Convey("capital.Free 应该等于 amount", func() {
+					So(capital.Free, ShouldEqual, amount)
+				})
+				Convey("asset.Free 应该等于 0", func() {
+					So(asset.Free, ShouldEqual, 0)
+				})
+				Convey("capital.Locked 应该等于 0", func() {
+					So(capital.Locked, ShouldEqual, 0)
+				})
+				Convey("asset 和 capital 的名字应该正确", func() {
+					So(asset.Name, ShouldEqual, od.AssetName)
+					So(capital.Name, ShouldEqual, od.CapitalName)
+				})
+			}
+			assetQuantity := 100.
+			ms := de(BtcUsdtOrder.With(exch.Market(exch.SELL, assetQuantity)))
+			tk := exch.NewTick(0, time.Now(), 1000, 100)
+			Convey("如果 tick.Volume < ms.AssetQuantity", func() {
+				tk.Volume = ms.AssetQuantity * 0.75
+				diff := tk.Volume
+				assetRemain := ms.AssetQuantity - diff
+				volumeRemain := tk.Volume - diff
+				amount := tk.Price * diff
+				check(ms, tk, assetRemain, volumeRemain, diff, amount)
+			})
+			Convey("如果 tick.Volume = ms.AssetQuantity", func() {
+				tk.Volume = ms.AssetQuantity
+				diff := tk.Volume
+				assetRemain := ms.AssetQuantity - diff
+				volumeRemain := tk.Volume - diff
+				amount := tk.Price * diff
+				check(ms, tk, assetRemain, volumeRemain, diff, amount)
+			})
+			Convey("如果 tick.Volume > ms.AssetQuantity", func() {
+				tk.Volume = ms.AssetQuantity * 1.25
+				diff := ms.AssetQuantity
+				assetRemain := ms.AssetQuantity - diff
+				volumeRemain := tk.Volume - diff
+				amount := tk.Price * diff
+				check(ms, tk, assetRemain, volumeRemain, diff, amount)
 			})
 		})
 	})

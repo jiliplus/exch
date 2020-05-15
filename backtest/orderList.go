@@ -3,6 +3,7 @@ package backtest
 import (
 	"bytes"
 	"encoding/gob"
+	"math"
 
 	"github.com/jujili/exch"
 )
@@ -41,9 +42,9 @@ func decOrderFunc() func(bs []byte) *order {
 }
 
 // isLessThan return true if o < a
-// REVIEW: 当 Order 的 Type 增加以后，这个方法会爆炸。
+// otherwise return false
 func (o *order) isLessThan(a *order) bool {
-	if o == nil || a == nil {
+	if o == nil {
 		return false
 	}
 	if o.Side != a.Side {
@@ -58,6 +59,23 @@ func (o *order) isLessThan(a *order) bool {
 	case exch.LIMIT:
 		return (o.AssetPrice == a.AssetPrice && o.ID < a.ID) ||
 			o.sidePrice() < a.sidePrice()
+	default:
+		panic("现在只能处理 limit 和 market 类型。")
+	}
+}
+
+// canMatch return true if o < a
+// otherwise return false
+func (o *order) canMatch(price float64) bool {
+	if o == nil {
+		return false
+	}
+	switch o.Type {
+	case exch.MARKET:
+		// MARKET 总是可以撮合上
+		return true
+	case exch.LIMIT:
+		return o.sidePrice() <= float64(o.Side)*price
 	default:
 		panic("现在只能处理 limit 和 market 类型。")
 	}
@@ -91,19 +109,90 @@ func (l *orderList) canMatch(price float64) bool {
 		return false
 	}
 	order := l.head.next
-	if order.Type == exch.MARKET {
-		return true
+	return order.canMatch(price)
+}
+
+// 对于每个 tick 总是认为可以撮合成功，形成交易的。
+// 这里没有考虑手续费和滑点。
+// match 前需要使用 canMatch 进行检查， match 内就不再检查了
+func (o *order) match(tick *exch.Tick) []exch.Asset {
+
+	// if o.Type == exch.MARKET {
+	// 	// 市价单以 tick 的价格成交
+	// 	asset.Free = math.Min(o.CapitalQuantity/tick.Price, tick.Volume)
+	// 	capital.Locked = -math.Min(o.CapitalQuantity, tick.Price*tick.Volume)
+	// 	tick.Volume -= asset.Free
+	// 	o.CapitalQuantity += capital.Locked
+	// 	return []exch.Asset{asset, capital}
+	// }
+
+	// if o.Side == exch.BUY {
+	// 	if o.Type == exch.LIMIT {
+	// 		// 限价单以 order 的价格成交
+	// 		if tick.Price <= o.AssetPrice {
+	// 			if tick.Volume >= o.AssetQuantity {
+	// 				asset.Free = o.AssetQuantity
+	// 				capital.Locked = -o.AssetPrice * asset.Free
+	// 				tick.Volume -= asset.Free
+	// 				// o 会被丢弃，无需对其进行修改
+	// 			} else {
+	// 				asset.Free = tick.Volume
+	// 				capital.Locked = -o.AssetPrice * tick.Volume
+	// 				tick.Volume = 0
+	// 				// o 还要放回 orderList，所以需要对其进行修改
+	// 				o.AssetQuantity -= asset.Free
+	// 			}
+	// 		}
+	// 	}
+	// 	return []exch.Asset{asset, capital}
+	// }
+
+	// // o.Side == exch.SELL
+	// if o.Type == exch.LIMIT {
+	// 	// 限价单以 order 的价格成交
+	// 	if tick.Price >= o.AssetPrice {
+	// 		if tick.Volume >= o.AssetQuantity {
+	// 			asset.Free = o.AssetQuantity
+	// 			capital.Locked = -o.AssetPrice * asset.Free
+	// 			tick.Volume -= o.AssetQuantity
+	// 			// o 会被丢弃，无需对其进行修改
+	// 		} else {
+	// 			asset.Free = tick.Volume
+	// 			capital.Locked = -o.AssetPrice * tick.Volume
+	// 			tick.Volume = 0
+	// 			// o 还要放回 orderList，所以需要对其进行修改
+	// 			o.AssetQuantity -= asset.Free
+	// 		}
+	// 	}
+	// }
+
+	return []exch.Asset{}
+}
+
+func matchMarket(o *order, t *exch.Tick) []exch.Asset {
+	var asset, capital exch.Asset
+	asset.Name = o.AssetName
+	capital.Name = o.CapitalName
+	if o.Type != exch.MARKET {
+		panic("order.Type should be exch.MARKET")
 	}
-	// order.Type == exch.LIMIT
-	if order.Side == exch.BUY {
-		return order.AssetPrice >= price
+	if o.Side == exch.SELL {
+		diff := math.Min(o.AssetQuantity, t.Volume)
+		asset.Locked = -diff
+		capital.Free = t.Price * diff
+		t.Volume -= diff
+		o.AssetQuantity -= diff
 	}
-	// order.Side == exch.BUY
-	return order.AssetPrice <= price
+	// add.Free = math.Min(o.CapitalQuantity/tick.Price, tick.Volume)
+	// lost.Locked = -math.Min(o.CapitalQuantity, tick.Price*tick.Volume)
+	// tick.Volume -= add.Free
+	// o.CapitalQuantity += lost.Locked
+	return []exch.Asset{asset, capital}
 }
 
 // // 对于每个 tick 总是认为可以撮合成功，形成交易的。
 // // 这里没有考虑手续费和滑点。
+// // match 前需要使用 canMatch 进行检查， match 内就不再检查了
 // func (o *order) match(tick *exch.Tick) []exch.Asset {
 // 	var add, lost exch.Asset
 // 	if o.Side == exch.BUY {
