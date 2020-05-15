@@ -203,195 +203,6 @@ func Test_orderList_pop(t *testing.T) {
 	})
 }
 
-// func Test_order_match(t *testing.T) {
-// 	Convey("order.match", t, func() {
-// 		enc := exch.EncFunc()
-// 		dec := decOrderFunc()
-// 		de := func(i interface{}) *order {
-// 			return dec(enc(i))
-// 		}
-// 		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
-// 		var add, lost exch.Asset
-// 		Convey("BUY 单时", func() {
-// 			Convey("市价单以 tick 的价格撮合", func() {
-// 				mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 1000)))
-// 				price := 100.
-// 				Convey("order 的金额 <= tick 的交易额", func() {
-// 					tick := exch.NewTick(1, time.Now(), price, mb.CapitalQuantity/price*10)
-// 					eAddFree := mb.CapitalQuantity / tick.Price
-// 					eLostLocked := -mb.CapitalQuantity
-// 					eTickVolume := tick.Volume - eAddFree
-// 					as := mb.match(tick)
-// 					Convey("order 的 CapitalQuantity 会成为 0", func() {
-// 						So(mb.CapitalQuantity, ShouldEqual, 0)
-// 					})
-// 					Convey("tick.Volume 会变少", func() {
-// 						So(tick.Volume, ShouldEqual, eTickVolume)
-// 						So(tick.Volume, ShouldBeGreaterThanOrEqualTo, 0)
-// 					})
-// 					So(len(as), ShouldEqual, 2)
-// 					add, lost = as[0], as[1]
-// 					Convey("add 和 lost 的相关部分会发生变化", func() {
-// 						So(add.Free, ShouldEqual, eAddFree)
-// 						So(lost.Locked, ShouldEqual, eLostLocked)
-// 					})
-// 				})
-// 				Convey("order 的金额 > tick 的交易额", func() {
-// 					tick := exch.NewTick(1, time.Now(), price, mb.CapitalQuantity/price/2)
-// 					eAddFree := tick.Volume
-// 					eLostLocked := -tick.Price * tick.Volume
-// 					eOrderCapitalQuantity := mb.CapitalQuantity + eLostLocked
-// 					as := mb.match(tick)
-// 					Convey("tick.Volume 会成为 0", func() {
-// 						So(tick.Volume, ShouldEqual, 0)
-// 					})
-// 					Convey("order 的 CapitalQuantity 会变化", func() {
-// 						So(mb.CapitalQuantity, ShouldEqual, eOrderCapitalQuantity)
-// 					})
-// 					So(len(as), ShouldEqual, 2)
-// 					add, lost = as[0], as[1]
-// 					Convey("add 和 lost 的相关部分会发生变化", func() {
-// 						So(add.Free, ShouldEqual, eAddFree)
-// 						So(lost.Locked, ShouldEqual, eLostLocked)
-// 					})
-// 				})
-// 			})
-// 			Convey("限价单以 order 的价格进行撮合", func() {
-// 				price := 10000.
-// 				lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, 100, price)))
-// 				Convey("tick 的价格 > order 的价格", func() {
-// 					higherPrice := price + 1
-// 					tick := exch.NewTick(1, time.Now(), higherPrice, 10)
-// 					expectedTick := *tick
-// 					So(&expectedTick, ShouldNotEqual, tick)
-// 					as := lb.match(tick)
-// 					add, lost = as[0], as[1]
-// 					So(*tick, ShouldResemble, expectedTick)
-// 				})
-// 				Convey("tick 的价格 <= order 的价格", func() {
-// 					lowerPrice := price - 1
-// 					tick := exch.NewTick(1, time.Now(), lowerPrice, 10)
-// 					Convey("tick.Volume >= order.AssetQuantity", func() {
-// 						diff := 1.25
-// 						So(diff, ShouldBeGreaterThan, 0)
-// 						tick.Volume = lb.AssetQuantity + diff
-// 						expectedAddFree := lb.AssetQuantity
-// 						expectedLostLocked := -lb.AssetPrice * expectedAddFree
-// 						as := lb.match(tick)
-// 						So(tick.Volume, ShouldEqual, diff)
-// 						add, lost = as[0], as[1]
-// 						So(add.Free, ShouldEqual, expectedAddFree)
-// 						So(lost.Locked, ShouldEqual, expectedLostLocked)
-// 					})
-// 					Convey("tick.Volume < order.AssetQuantity", func() {
-// 						diff := 0.5
-// 						So(diff, ShouldBeLessThan, lb.AssetQuantity)
-// 						tick.Volume = lb.AssetQuantity - diff
-// 						expectedAddFree := tick.Volume
-// 						expectedLostLocked := -tick.Volume * lb.AssetPrice
-// 						as := lb.match(tick)
-// 						So(tick.Volume, ShouldEqual, 0)
-// 						add, lost = as[0], as[1]
-// 						So(add.Free, ShouldEqual, expectedAddFree)
-// 						So(lost.Locked, ShouldEqual, expectedLostLocked)
-// 						So(lb.AssetQuantity, ShouldEqual, diff)
-// 					})
-// 				})
-// 			})
-// 			So(add.Name, ShouldEqual, BtcUsdtOrder.AssetName)
-// 			So(add.Locked, ShouldEqual, 0)
-// 			So(lost.Name, ShouldEqual, BtcUsdtOrder.CapitalName)
-// 			So(lost.Free, ShouldEqual, 0)
-// 		})
-// 		Convey("SELL 单时", func() {
-// 			Convey("市价单以 tick 的价格撮合", func() {
-// 				ms := de(BtcUsdtOrder.With(exch.Market(exch.SELL, 1000)))
-// 				price := 100.
-// 				Convey("order 的金额 <= tick 的交易额", func() {
-// 					tick := exch.NewTick(1, time.Now(), price, ms.AssetQuantity*10)
-// 					eAddFree := ms.AssetQuantity * tick.Price
-// 					eLostLocked := -ms.AssetQuantity
-// 					eTickVolume := tick.Volume - ms.AssetQuantity
-// 					as := ms.match(tick)
-// 					Convey("tick.Volume 会变少", func() {
-// 						So(tick.Volume, ShouldEqual, eTickVolume)
-// 					})
-// 					Convey("ms.AssetQuantity 会变成 0", func() {
-// 						So(ms.AssetQuantity, ShouldEqual, 0)
-// 					})
-// 					So(len(as), ShouldEqual, 2)
-// 					add, lost = as[0], as[1]
-// 					Convey("add 和 lost 会有变化", func() {
-// 						So(add.Free, ShouldEqual, eAddFree)
-// 						So(lost.Locked, ShouldEqual, eLostLocked)
-// 					})
-// 				})
-// 				Convey("order 的金额 > tick 的交易额", func() {
-// 					tick := exch.NewTick(1, time.Now(), price, ms.AssetQuantity/2)
-// 					expectedAddFree := tick.Volume
-// 					expectedLostLocked := -tick.Price * tick.Volume
-// 					expectedOrderCapitalQuantity := ms.CapitalQuantity + expectedLostLocked
-// 					as := ms.match(tick)
-// 					So(tick.Volume, ShouldEqual, 0)
-// 					So(ms.CapitalQuantity, ShouldEqual, expectedOrderCapitalQuantity)
-// 					So(len(as), ShouldEqual, 2)
-// 					add, lost = as[0], as[1]
-// 					So(add.Free, ShouldEqual, expectedAddFree)
-// 					So(lost.Locked, ShouldEqual, expectedLostLocked)
-// 				})
-// 			})
-// 			Convey("限价单以 order 的价格进行撮合", func() {
-// 				price := 10000.
-// 				ls := de(BtcUsdtOrder.With(exch.Limit(exch.SELL, 100, price)))
-// 				Convey("tick 的价格 < order 的价格", func() {
-// 					lowerPrice := price - 1
-// 					tick := exch.NewTick(1, time.Now(), lowerPrice, 10)
-// 					expectedTick := *tick
-// 					So(&expectedTick, ShouldNotEqual, tick)
-// 					as := ls.match(tick)
-// 					add, lost = as[0], as[1]
-// 					Convey("不会对 tick 进行修改", func() {
-// 						So(*tick, ShouldResemble, expectedTick)
-// 					})
-// 				})
-// 				Convey("tick 的价格 >= order 的价格", func() {
-// 					higherPrice := price + 1
-// 					tick := exch.NewTick(1, time.Now(), higherPrice, 0)
-// 					Convey("tick.Volume >= order.AssetQuantity", func() {
-// 						diff := 1.25
-// 						So(diff, ShouldBeGreaterThan, 0)
-// 						tick.Volume = ls.AssetQuantity + diff
-// 						expectedAddFree := ls.AssetQuantity
-// 						expectedLostLocked := -ls.AssetPrice * expectedAddFree
-// 						as := ls.match(tick)
-// 						So(tick.Volume, ShouldEqual, diff)
-// 						add, lost = as[0], as[1]
-// 						So(add.Free, ShouldEqual, expectedAddFree)
-// 						So(lost.Locked, ShouldEqual, expectedLostLocked)
-// 					})
-// 					Convey("tick.Volume < order.AssetQuantity", func() {
-// 						diff := 0.5
-// 						So(diff, ShouldBeLessThan, ls.AssetQuantity)
-// 						tick.Volume = ls.AssetQuantity - diff
-// 						expectedAddFree := tick.Volume
-// 						expectedLostLocked := -tick.Volume * ls.AssetPrice
-// 						as := ls.match(tick)
-// 						So(tick.Volume, ShouldEqual, 0)
-// 						So(ls.AssetQuantity, ShouldEqual, diff)
-// 						add, lost = as[0], as[1]
-// 						So(add.Free, ShouldEqual, expectedAddFree)
-// 						So(lost.Locked, ShouldEqual, expectedLostLocked)
-// 					})
-// 				})
-// 			})
-// 			So(add.Name, ShouldEqual, BtcUsdtOrder.CapitalName)
-// 			So(add.Locked, ShouldEqual, 0)
-// 			So(lost.Name, ShouldEqual, BtcUsdtOrder.AssetName)
-// 			So(lost.Free, ShouldEqual, 0)
-// 		})
-// 	})
-// }
-
 func Test_orderList_canMatch(t *testing.T) {
 	Convey("orderList.canMatch", t, func() {
 		enc := exch.EncFunc()
@@ -452,33 +263,6 @@ func Test_order_canMatch(t *testing.T) {
 	})
 }
 
-func check(od *order, tk *exch.Tick, assetRemain, volumeRemain, volume, amount float64) {
-	as := matchMarket2(od, tk)
-	Convey("order.AssetQuantity 应该等于 assetRemain", func() {
-		So(od.AssetQuantity, ShouldEqual, assetRemain)
-	})
-	Convey("tick.Volume 应该为 volumeRemain", func() {
-		So(tk.Volume, ShouldEqual, volumeRemain)
-	})
-	asset, capital := as[0], as[1]
-	Convey("asset.Locked 应该等于 -volume", func() {
-		So(asset.Locked, ShouldEqual, -volume)
-	})
-	Convey("capital.Free 应该等于 amount", func() {
-		So(capital.Free, ShouldEqual, amount)
-	})
-	Convey("asset.Free 应该等于 0", func() {
-		So(asset.Free, ShouldEqual, 0)
-	})
-	Convey("capital.Locked 应该等于 0", func() {
-		So(capital.Locked, ShouldEqual, 0)
-	})
-	Convey("asset 和 capital 的名字应该正确", func() {
-		So(asset.Name, ShouldEqual, od.AssetName)
-		So(capital.Name, ShouldEqual, od.CapitalName)
-	})
-}
-
 func checkMatch(
 	matchFunc func(order, exch.Tick) (order, exch.Tick, []exch.Asset),
 	ao, eo order,
@@ -501,13 +285,15 @@ func checkMatch(
 	})
 }
 
+// de 方便生成 order
+func de(i interface{}) *order {
+	enc := exch.EncFunc()
+	dec := decOrderFunc()
+	return dec(enc(i))
+}
+
 func Test_matchMarket(t *testing.T) {
 	Convey("matchMarket 撮合市价单", t, func() {
-		enc := exch.EncFunc()
-		dec := decOrderFunc()
-		de := func(i interface{}) *order {
-			return dec(enc(i))
-		}
 		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
 		//
 		Convey("输入别的类型的 order 会 panic", func() {
@@ -515,7 +301,7 @@ func Test_matchMarket(t *testing.T) {
 			So(lb.Type, ShouldNotEqual, exch.MARKET)
 			So(func() {
 				var tk exch.Tick
-				matchMarket2(lb, &tk)
+				matchMarket(*lb, tk)
 			}, ShouldPanic)
 		})
 		//
@@ -608,6 +394,223 @@ func Test_matchMarket(t *testing.T) {
 				eAsset.Locked = -ms.AssetQuantity
 				eCapital.Free = ms.AssetQuantity * tk.Price
 				checkMatch(matchMarket, *ms, eo, tk, et, eAsset, eCapital)
+			})
+		})
+	})
+}
+
+func Test_matchLimit(t *testing.T) {
+	Convey("matchLimit 撮合限价单", t, func() {
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
+		Convey("输入别的类型的 order 会 panic", func() {
+			lb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
+			So(lb.Type, ShouldNotEqual, exch.LIMIT)
+			So(func() {
+				var tk exch.Tick
+				matchLimit(*lb, tk)
+			}, ShouldPanic)
+		})
+		//
+		eAsset := exch.NewAsset(BtcUsdtOrder.AssetName, 0, 0)
+		eCapital := exch.NewAsset(BtcUsdtOrder.CapitalName, 0, 0)
+		//
+		Convey("SELL 时", func() {
+			quantity, price := 10000., 100.
+			ls := de(BtcUsdtOrder.With(exch.Limit(exch.SELL, quantity, price)))
+			tk := exch.NewTick(0, time.Now(), 1000, 100)
+			Convey("如果 tick.Price < ls.AssetPrice，则无法成交", func() {
+				tk.Price = ls.AssetPrice / 2
+				//
+				et := tk
+				//
+				eo := *ls
+				checkMatch(matchLimit, *ls, eo, tk, et, eAsset, eCapital)
+			})
+			Convey("如果 tick.Price = ls.AssetPrice，则可以成交", func() {
+				tk.Price = ls.AssetPrice
+				//
+				Convey("如果 tick.Volume < ls.AssetQuantity", func() {
+					tk.Volume = ls.AssetQuantity / 2
+					//
+					et := tk
+					et.Volume = 0
+					//
+					eo := *ls
+					eo.AssetQuantity = ls.AssetQuantity - tk.Volume
+					//
+					eAsset.Locked = -tk.Volume
+					eCapital.Free = ls.AssetPrice * tk.Volume
+					checkMatch(matchLimit, *ls, eo, tk, et, eAsset, eCapital)
+				})
+				Convey("如果 tick.Volume = ls.AssetQuantity", func() {
+					tk.Volume = ls.AssetQuantity
+					//
+					et := tk
+					et.Volume = 0
+					//
+					eo := *ls
+					eo.AssetQuantity = 0
+					//
+					eAsset.Locked = -tk.Volume
+					eCapital.Free = ls.AssetPrice * tk.Volume
+					checkMatch(matchLimit, *ls, eo, tk, et, eAsset, eCapital)
+				})
+				Convey("如果 tick.Volume > ls.AssetQuantity", func() {
+					tk.Volume = ls.AssetQuantity * 2
+					//
+					et := tk
+					et.Volume = tk.Volume - ls.AssetQuantity
+					//
+					eo := *ls
+					eo.AssetQuantity = 0
+					//
+					eAsset.Locked = -ls.AssetQuantity
+					eCapital.Free = ls.AssetPrice * ls.AssetQuantity
+					checkMatch(matchLimit, *ls, eo, tk, et, eAsset, eCapital)
+				})
+			})
+			Convey("如果 tick.Price > ls.AssetPrice，则可以成交", func() {
+				tk.Price = ls.AssetPrice * 2
+				//
+				Convey("如果 tick.Volume < ls.AssetQuantity", func() {
+					tk.Volume = ls.AssetQuantity / 2
+					//
+					et := tk
+					et.Volume = 0
+					//
+					eo := *ls
+					eo.AssetQuantity = ls.AssetQuantity - tk.Volume
+					//
+					eAsset.Locked = -tk.Volume
+					eCapital.Free = ls.AssetPrice * tk.Volume
+					checkMatch(matchLimit, *ls, eo, tk, et, eAsset, eCapital)
+				})
+				Convey("如果 tick.Volume = ls.AssetQuantity", func() {
+					tk.Volume = ls.AssetQuantity
+					//
+					et := tk
+					et.Volume = 0
+					//
+					eo := *ls
+					eo.AssetQuantity = 0
+					//
+					eAsset.Locked = -tk.Volume
+					eCapital.Free = ls.AssetPrice * tk.Volume
+					checkMatch(matchLimit, *ls, eo, tk, et, eAsset, eCapital)
+				})
+				Convey("如果 tick.Volume > ls.AssetQuantity", func() {
+					tk.Volume = ls.AssetQuantity * 2
+					//
+					et := tk
+					et.Volume = tk.Volume - ls.AssetQuantity
+					//
+					eo := *ls
+					eo.AssetQuantity = 0
+					//
+					eAsset.Locked = -ls.AssetQuantity
+					eCapital.Free = ls.AssetPrice * ls.AssetQuantity
+					checkMatch(matchLimit, *ls, eo, tk, et, eAsset, eCapital)
+				})
+			})
+		})
+		Convey("BUY 时", func() {
+			quantity, price := 10000., 100.
+			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, quantity, price)))
+			tk := exch.NewTick(0, time.Now(), 1000, 100)
+			Convey("如果 tick.Price > lb.AssetPrice，则无法成交", func() {
+				tk.Price = lb.AssetPrice * 2
+				//
+				et := tk
+				//
+				eo := *lb
+				checkMatch(matchLimit, *lb, eo, tk, et, eAsset, eCapital)
+			})
+			Convey("如果 tick.Price = lb.AssetPrice，则可以成交", func() {
+				tk.Price = lb.AssetPrice
+				//
+				Convey("如果 tick.Volume < lb.AssetQuantity", func() {
+					tk.Volume = lb.AssetQuantity / 2
+					//
+					et := tk
+					et.Volume = 0
+					//
+					eo := *lb
+					eo.AssetQuantity = lb.AssetQuantity - tk.Volume
+					//
+					eAsset.Free = tk.Volume
+					eCapital.Locked = -lb.AssetPrice * tk.Volume
+					checkMatch(matchLimit, *lb, eo, tk, et, eAsset, eCapital)
+				})
+				Convey("如果 tick.Volume = lb.AssetQuantity", func() {
+					tk.Volume = lb.AssetQuantity
+					//
+					et := tk
+					et.Volume = 0
+					//
+					eo := *lb
+					eo.AssetQuantity = 0
+					//
+					eAsset.Free = tk.Volume
+					eCapital.Locked = -lb.AssetPrice * tk.Volume
+					checkMatch(matchLimit, *lb, eo, tk, et, eAsset, eCapital)
+				})
+				Convey("如果 tick.Volume > lb.AssetQuantity", func() {
+					tk.Volume = lb.AssetQuantity * 2
+					//
+					et := tk
+					et.Volume = tk.Volume - lb.AssetQuantity
+					//
+					eo := *lb
+					eo.AssetQuantity = 0
+					//
+					eAsset.Free = lb.AssetQuantity
+					eCapital.Locked = -lb.AssetPrice * lb.AssetQuantity
+					checkMatch(matchLimit, *lb, eo, tk, et, eAsset, eCapital)
+				})
+			})
+			Convey("如果 tick.Price < lb.AssetPrice，则可以成交", func() {
+				tk.Price = lb.AssetPrice / 2
+				//
+				Convey("如果 tick.Volume < lb.AssetQuantity", func() {
+					tk.Volume = lb.AssetQuantity / 2
+					//
+					et := tk
+					et.Volume = 0
+					//
+					eo := *lb
+					eo.AssetQuantity = lb.AssetQuantity - tk.Volume
+					//
+					eAsset.Free = tk.Volume
+					eCapital.Locked = -lb.AssetPrice * tk.Volume
+					checkMatch(matchLimit, *lb, eo, tk, et, eAsset, eCapital)
+				})
+				Convey("如果 tick.Volume = lb.AssetQuantity", func() {
+					tk.Volume = lb.AssetQuantity
+					//
+					et := tk
+					et.Volume = 0
+					//
+					eo := *lb
+					eo.AssetQuantity = 0
+					//
+					eAsset.Free = tk.Volume
+					eCapital.Locked = -lb.AssetPrice * tk.Volume
+					checkMatch(matchLimit, *lb, eo, tk, et, eAsset, eCapital)
+				})
+				Convey("如果 tick.Volume > lb.AssetQuantity", func() {
+					tk.Volume = lb.AssetQuantity * 2
+					//
+					et := tk
+					et.Volume = tk.Volume - lb.AssetQuantity
+					//
+					eo := *lb
+					eo.AssetQuantity = 0
+					//
+					eAsset.Free = lb.AssetQuantity
+					eCapital.Locked = -lb.AssetPrice * lb.AssetQuantity
+					checkMatch(matchLimit, *lb, eo, tk, et, eAsset, eCapital)
+				})
 			})
 		})
 	})

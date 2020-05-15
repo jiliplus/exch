@@ -115,80 +115,16 @@ func (l *orderList) canMatch(price float64) bool {
 // 对于每个 tick 总是认为可以撮合成功，形成交易的。
 // 这里没有考虑手续费和滑点。
 // match 前需要使用 canMatch 进行检查， match 内就不再检查了
-func (o *order) match(tick *exch.Tick) []exch.Asset {
+func (o order) match(tick exch.Tick) (order, exch.Tick, []exch.Asset) {
 
-	// if o.Type == exch.MARKET {
-	// 	// 市价单以 tick 的价格成交
-	// 	asset.Free = math.Min(o.CapitalQuantity/tick.Price, tick.Volume)
-	// 	capital.Locked = -math.Min(o.CapitalQuantity, tick.Price*tick.Volume)
-	// 	tick.Volume -= asset.Free
-	// 	o.CapitalQuantity += capital.Locked
-	// 	return []exch.Asset{asset, capital}
-	// }
-
-	// if o.Side == exch.BUY {
-	// 	if o.Type == exch.LIMIT {
-	// 		// 限价单以 order 的价格成交
-	// 		if tick.Price <= o.AssetPrice {
-	// 			if tick.Volume >= o.AssetQuantity {
-	// 				asset.Free = o.AssetQuantity
-	// 				capital.Locked = -o.AssetPrice * asset.Free
-	// 				tick.Volume -= asset.Free
-	// 				// o 会被丢弃，无需对其进行修改
-	// 			} else {
-	// 				asset.Free = tick.Volume
-	// 				capital.Locked = -o.AssetPrice * tick.Volume
-	// 				tick.Volume = 0
-	// 				// o 还要放回 orderList，所以需要对其进行修改
-	// 				o.AssetQuantity -= asset.Free
-	// 			}
-	// 		}
-	// 	}
-	// 	return []exch.Asset{asset, capital}
-	// }
-
-	// // o.Side == exch.SELL
-	// if o.Type == exch.LIMIT {
-	// 	// 限价单以 order 的价格成交
-	// 	if tick.Price >= o.AssetPrice {
-	// 		if tick.Volume >= o.AssetQuantity {
-	// 			asset.Free = o.AssetQuantity
-	// 			capital.Locked = -o.AssetPrice * asset.Free
-	// 			tick.Volume -= o.AssetQuantity
-	// 			// o 会被丢弃，无需对其进行修改
-	// 		} else {
-	// 			asset.Free = tick.Volume
-	// 			capital.Locked = -o.AssetPrice * tick.Volume
-	// 			tick.Volume = 0
-	// 			// o 还要放回 orderList，所以需要对其进行修改
-	// 			o.AssetQuantity -= asset.Free
-	// 		}
-	// 	}
-	// }
-
-	return []exch.Asset{}
-}
-
-// TODO: 删除这个函数
-func matchMarket2(o *order, t *exch.Tick) []exch.Asset {
-	var asset, capital exch.Asset
-	asset.Name = o.AssetName
-	capital.Name = o.CapitalName
-	if o.Type != exch.MARKET {
-		panic("order.Type should be exch.MARKET")
+	switch o.Type {
+	case exch.MARKET:
+		return matchMarket(o, tick)
+	case exch.LIMIT:
+		return matchLimit(o, tick)
+	default:
+		panic("现在只能处理 limit 和 market 类型。")
 	}
-	if o.Side == exch.SELL {
-		diff := math.Min(o.AssetQuantity, t.Volume)
-		asset.Locked = -diff
-		capital.Free = t.Price * diff
-		t.Volume -= diff
-		o.AssetQuantity -= diff
-	}
-	// add.Free = math.Min(o.CapitalQuantity/tick.Price, tick.Volume)
-	// lost.Locked = -math.Min(o.CapitalQuantity, tick.Price*tick.Volume)
-	// tick.Volume -= add.Free
-	// o.CapitalQuantity += lost.Locked
-	return []exch.Asset{asset, capital}
 }
 
 func matchMarket(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
@@ -214,63 +150,27 @@ func matchMarket(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
 	return o, t, []exch.Asset{asset, capital}
 }
 
-// // 对于每个 tick 总是认为可以撮合成功，形成交易的。
-// // 这里没有考虑手续费和滑点。
-// // match 前需要使用 canMatch 进行检查， match 内就不再检查了
-// func (o *order) match(tick *exch.Tick) []exch.Asset {
-// 	var add, lost exch.Asset
-// 	if o.Side == exch.BUY {
-// 		add.Name = o.AssetName
-// 		lost.Name = o.CapitalName
-// 	} else {
-// 		add.Name = o.CapitalName
-// 		lost.Name = o.AssetName
-// 	}
-// 	if o.Type == exch.MARKET {
-// 		// 市价单以 tick 的价格成交
-// 		add.Free = math.Min(o.CapitalQuantity/tick.Price, tick.Volume)
-// 		lost.Locked = -math.Min(o.CapitalQuantity, tick.Price*tick.Volume)
-// 		tick.Volume -= add.Free
-// 		o.CapitalQuantity += lost.Locked
-// 		return []exch.Asset{add, lost}
-// 	}
-// 	if o.Side == exch.BUY {
-// 		if o.Type == exch.LIMIT {
-// 			// 限价单以 order 的价格成交
-// 			if tick.Price <= o.AssetPrice {
-// 				if tick.Volume >= o.AssetQuantity {
-// 					add.Free = o.AssetQuantity
-// 					lost.Locked = -o.AssetPrice * add.Free
-// 					tick.Volume -= add.Free
-// 					// o 会被丢弃，无需对其进行修改
-// 				} else {
-// 					add.Free = tick.Volume
-// 					lost.Locked = -o.AssetPrice * tick.Volume
-// 					tick.Volume = 0
-// 					// o 还要放回 orderList，所以需要对其进行修改
-// 					o.AssetQuantity -= add.Free
-// 				}
-// 			}
-// 		}
-// 		return []exch.Asset{add, lost}
-// 	}
-// 	// o.Side == exch.SELL
-// 	if o.Type == exch.LIMIT {
-// 		// 限价单以 order 的价格成交
-// 		if tick.Price >= o.AssetPrice {
-// 			if tick.Volume >= o.AssetQuantity {
-// 				add.Free = o.AssetQuantity
-// 				lost.Locked = -o.AssetPrice * add.Free
-// 				tick.Volume -= o.AssetQuantity
-// 				// o 会被丢弃，无需对其进行修改
-// 			} else {
-// 				add.Free = tick.Volume
-// 				lost.Locked = -o.AssetPrice * tick.Volume
-// 				tick.Volume = 0
-// 				// o 还要放回 orderList，所以需要对其进行修改
-// 				o.AssetQuantity -= add.Free
-// 			}
-// 		}
-// 	}
-// 	return []exch.Asset{add, lost}
-// }
+func matchLimit(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
+	var asset, capital exch.Asset
+	asset.Name = o.AssetName
+	capital.Name = o.CapitalName
+	if o.Type != exch.LIMIT {
+		panic("order.Type should be exch.LIMIT")
+	}
+	if float64(o.Side)*t.Price < o.sidePrice() {
+		return o, t, []exch.Asset{asset, capital}
+	}
+	// 处于谨慎的态度，以 o.AssetPrice 的价格成交
+	var diff float64
+	diff = math.Min(o.AssetQuantity, t.Volume)
+	if o.Side == exch.SELL {
+		asset.Locked = -diff
+		capital.Free = diff * o.AssetPrice
+	} else {
+		asset.Free = diff
+		capital.Locked = -diff * o.AssetPrice
+	}
+	t.Volume -= diff
+	o.AssetQuantity -= diff
+	return o, t, []exch.Asset{asset, capital}
+}
