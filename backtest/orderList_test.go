@@ -452,6 +452,55 @@ func Test_order_canMatch(t *testing.T) {
 	})
 }
 
+func check(od *order, tk *exch.Tick, assetRemain, volumeRemain, volume, amount float64) {
+	as := matchMarket2(od, tk)
+	Convey("order.AssetQuantity 应该等于 assetRemain", func() {
+		So(od.AssetQuantity, ShouldEqual, assetRemain)
+	})
+	Convey("tick.Volume 应该为 volumeRemain", func() {
+		So(tk.Volume, ShouldEqual, volumeRemain)
+	})
+	asset, capital := as[0], as[1]
+	Convey("asset.Locked 应该等于 -volume", func() {
+		So(asset.Locked, ShouldEqual, -volume)
+	})
+	Convey("capital.Free 应该等于 amount", func() {
+		So(capital.Free, ShouldEqual, amount)
+	})
+	Convey("asset.Free 应该等于 0", func() {
+		So(asset.Free, ShouldEqual, 0)
+	})
+	Convey("capital.Locked 应该等于 0", func() {
+		So(capital.Locked, ShouldEqual, 0)
+	})
+	Convey("asset 和 capital 的名字应该正确", func() {
+		So(asset.Name, ShouldEqual, od.AssetName)
+		So(capital.Name, ShouldEqual, od.CapitalName)
+	})
+}
+
+func checkMatch(
+	matchFunc func(order, exch.Tick) (order, exch.Tick, []exch.Asset),
+	ao, eo order,
+	at, et exch.Tick,
+	ea, ec exch.Asset,
+) {
+	ao, at, as := matchFunc(ao, at)
+	Convey("order 应该与预期相等", func() {
+		So(ao, ShouldResemble, eo)
+	})
+	Convey("tick 应该与预期相等", func() {
+		So(at, ShouldResemble, et)
+	})
+	aa, ac := as[0], as[1]
+	Convey("asset 应该与预期相等", func() {
+		So(aa, ShouldResemble, ea)
+	})
+	Convey("capital 应该与预期相等", func() {
+		So(ac, ShouldResemble, ec)
+	})
+}
+
 func Test_matchMarket(t *testing.T) {
 	Convey("matchMarket 撮合市价单", t, func() {
 		enc := exch.EncFunc()
@@ -460,66 +509,105 @@ func Test_matchMarket(t *testing.T) {
 			return dec(enc(i))
 		}
 		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
 		Convey("输入别的类型的 order 会 panic", func() {
 			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, 100, 100000)))
 			So(lb.Type, ShouldNotEqual, exch.MARKET)
 			So(func() {
-				matchMarket(lb, nil)
+				var tk exch.Tick
+				matchMarket2(lb, &tk)
 			}, ShouldPanic)
 		})
+		//
+		eAsset := exch.NewAsset(BtcUsdtOrder.AssetName, 0, 0)
+		eCapital := exch.NewAsset(BtcUsdtOrder.CapitalName, 0, 0)
+		//
+		Convey("BUY 时", func() {
+			capitalQuantity := 10000.
+			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, capitalQuantity)))
+			tk := exch.NewTick(0, time.Now(), 1000, 100)
+			Convey("如果 tick.Volume*tick.Price < mb.CapitalQuantity", func() {
+				tk.Volume = mb.CapitalQuantity / tk.Price * 0.5
+				//
+				et := tk
+				et.Volume = 0
+				//
+				eo := *mb
+				eo.CapitalQuantity = mb.CapitalQuantity / 2
+				//
+				eAsset.Free = tk.Volume
+				eCapital.Locked = -mb.CapitalQuantity / 2
+				checkMatch(matchMarket, *mb, eo, tk, et, eAsset, eCapital)
+			})
+			Convey("如果 tick.Volume*tick.Price = mb.CapitalQuantity", func() {
+				tk.Volume = mb.CapitalQuantity / tk.Price
+				//
+				et := tk
+				et.Volume = 0
+				//
+				eo := *mb
+				eo.CapitalQuantity = 0
+				//
+				eAsset.Free = tk.Volume
+				eCapital.Locked = -mb.CapitalQuantity
+				checkMatch(matchMarket, *mb, eo, tk, et, eAsset, eCapital)
+			})
+			Convey("如果 tick.Volume*tick.Price > mb.CapitalQuantity", func() {
+				tk.Volume = mb.CapitalQuantity / tk.Price * 2
+				//
+				et := tk
+				et.Volume = tk.Volume / 2
+				//
+				eo := *mb
+				eo.CapitalQuantity = 0
+				//
+				eAsset.Free = tk.Volume / 2
+				eCapital.Locked = -mb.CapitalQuantity
+				checkMatch(matchMarket, *mb, eo, tk, et, eAsset, eCapital)
+			})
+		})
 		Convey("SELL 时", func() {
-			check := func(od *order, tk *exch.Tick, assetRemain, volumeRemain, volume, amount float64) {
-				as := matchMarket(od, tk)
-				Convey("order.AssetQuantity 应该等于 assetRemain", func() {
-					So(od.AssetQuantity, ShouldEqual, assetRemain)
-				})
-				Convey("tick.Volume 应该为 volumeRemain", func() {
-					So(tk.Volume, ShouldEqual, volumeRemain)
-				})
-				asset, capital := as[0], as[1]
-				Convey("asset.Locked 应该等于 -volume", func() {
-					So(asset.Locked, ShouldEqual, -volume)
-				})
-				Convey("capital.Free 应该等于 amount", func() {
-					So(capital.Free, ShouldEqual, amount)
-				})
-				Convey("asset.Free 应该等于 0", func() {
-					So(asset.Free, ShouldEqual, 0)
-				})
-				Convey("capital.Locked 应该等于 0", func() {
-					So(capital.Locked, ShouldEqual, 0)
-				})
-				Convey("asset 和 capital 的名字应该正确", func() {
-					So(asset.Name, ShouldEqual, od.AssetName)
-					So(capital.Name, ShouldEqual, od.CapitalName)
-				})
-			}
 			assetQuantity := 100.
 			ms := de(BtcUsdtOrder.With(exch.Market(exch.SELL, assetQuantity)))
 			tk := exch.NewTick(0, time.Now(), 1000, 100)
 			Convey("如果 tick.Volume < ms.AssetQuantity", func() {
 				tk.Volume = ms.AssetQuantity * 0.75
-				diff := tk.Volume
-				assetRemain := ms.AssetQuantity - diff
-				volumeRemain := tk.Volume - diff
-				amount := tk.Price * diff
-				check(ms, tk, assetRemain, volumeRemain, diff, amount)
+				//
+				et := tk
+				et.Volume = 0
+				//
+				eo := *ms
+				eo.AssetQuantity = ms.AssetQuantity - tk.Volume
+				//
+				eAsset.Locked = -tk.Volume
+				eCapital.Free = tk.Volume * tk.Price
+				checkMatch(matchMarket, *ms, eo, tk, et, eAsset, eCapital)
 			})
 			Convey("如果 tick.Volume = ms.AssetQuantity", func() {
 				tk.Volume = ms.AssetQuantity
-				diff := tk.Volume
-				assetRemain := ms.AssetQuantity - diff
-				volumeRemain := tk.Volume - diff
-				amount := tk.Price * diff
-				check(ms, tk, assetRemain, volumeRemain, diff, amount)
+				//
+				et := tk
+				et.Volume = 0
+				//
+				eo := *ms
+				eo.AssetQuantity = ms.AssetQuantity - tk.Volume
+				//
+				eAsset.Locked = -tk.Volume
+				eCapital.Free = tk.Volume * tk.Price
+				checkMatch(matchMarket, *ms, eo, tk, et, eAsset, eCapital)
 			})
 			Convey("如果 tick.Volume > ms.AssetQuantity", func() {
 				tk.Volume = ms.AssetQuantity * 1.25
-				diff := ms.AssetQuantity
-				assetRemain := ms.AssetQuantity - diff
-				volumeRemain := tk.Volume - diff
-				amount := tk.Price * diff
-				check(ms, tk, assetRemain, volumeRemain, diff, amount)
+				//
+				et := tk
+				et.Volume = tk.Volume - ms.AssetQuantity
+				//
+				eo := *ms
+				eo.AssetQuantity = 0
+				//
+				eAsset.Locked = -ms.AssetQuantity
+				eCapital.Free = ms.AssetQuantity * tk.Price
+				checkMatch(matchMarket, *ms, eo, tk, et, eAsset, eCapital)
 			})
 		})
 	})

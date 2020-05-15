@@ -22,8 +22,8 @@ type Tick struct {
 }
 
 // NewTick returns a new tick
-func NewTick(id int64, date time.Time, price, volume float64) *Tick {
-	return &Tick{
+func NewTick(id int64, date time.Time, price, volume float64) Tick {
+	return Tick{
 		ID:     id,
 		Date:   date,
 		Price:  price,

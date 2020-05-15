@@ -169,7 +169,8 @@ func (o *order) match(tick *exch.Tick) []exch.Asset {
 	return []exch.Asset{}
 }
 
-func matchMarket(o *order, t *exch.Tick) []exch.Asset {
+// TODO: 删除这个函数
+func matchMarket2(o *order, t *exch.Tick) []exch.Asset {
 	var asset, capital exch.Asset
 	asset.Name = o.AssetName
 	capital.Name = o.CapitalName
@@ -188,6 +189,29 @@ func matchMarket(o *order, t *exch.Tick) []exch.Asset {
 	// tick.Volume -= add.Free
 	// o.CapitalQuantity += lost.Locked
 	return []exch.Asset{asset, capital}
+}
+
+func matchMarket(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
+	var asset, capital exch.Asset
+	asset.Name = o.AssetName
+	capital.Name = o.CapitalName
+	if o.Type != exch.MARKET {
+		panic("order.Type should be exch.MARKET")
+	}
+	if o.Side == exch.SELL {
+		diff := math.Min(o.AssetQuantity, t.Volume)
+		asset.Locked = -diff
+		capital.Free = t.Price * diff
+		t.Volume -= diff
+		o.AssetQuantity -= diff
+	} else {
+		diff := math.Min(o.CapitalQuantity, t.Volume*t.Price)
+		asset.Free = diff / t.Price
+		capital.Locked = -diff
+		t.Volume -= diff / t.Price
+		o.CapitalQuantity -= diff
+	}
+	return o, t, []exch.Asset{asset, capital}
 }
 
 // // 对于每个 tick 总是认为可以撮合成功，形成交易的。
