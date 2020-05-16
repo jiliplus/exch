@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jujili/exch"
+	"github.com/prashantv/gostub"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -611,6 +612,52 @@ func Test_matchLimit(t *testing.T) {
 					eCapital.Locked = -lb.AssetPrice * lb.AssetQuantity
 					checkMatch(matchLimit, *lb, eo, tk, et, eAsset, eCapital)
 				})
+			})
+		})
+	})
+}
+
+func Test_order_match(t *testing.T) {
+	Convey("测试 order.match", t, func() {
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
+		Convey("输入别的类型的 order 会 panic", func() {
+			lb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
+			lb.Type = 3
+			// NOTICE: order.match 匹配的返回扩大以后，需要修改这个断言。
+			So(lb.Type, ShouldNotBeBetweenOrEqual, 1, 2)
+			So(func() {
+				var tk exch.Tick
+				lb.match(tk)
+			}, ShouldPanicWith, "现在只能处理 limit 和 market 类型")
+		})
+		Convey("MARKET 的 order.match 会调用 matchMarket", func() {
+			hasCalled := false
+			stubs := gostub.Stub(&matchMarket, func(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
+				hasCalled = true
+				return o, t, nil
+			})
+			defer stubs.Reset()
+			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 1000)))
+			tk := exch.NewTick(0, time.Now(), 1000, 100)
+			mb.match(tk)
+			Convey("matchMarket 应该被调用了", func() {
+				So(hasCalled, ShouldBeTrue)
+			})
+		})
+		//
+		Convey("LIMIT 的 order.match 会调用 matchLimit", func() {
+			hasCalled := false
+			stubs := gostub.Stub(&matchLimit, func(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
+				hasCalled = true
+				return o, t, nil
+			})
+			defer stubs.Reset()
+			ls := de(BtcUsdtOrder.With(exch.Limit(exch.SELL, 10000, 100)))
+			tk := exch.NewTick(0, time.Now(), 1000, 100)
+			ls.match(tk)
+			Convey("matchLimit 应该被调用了", func() {
+				So(hasCalled, ShouldBeTrue)
 			})
 		})
 	})

@@ -66,13 +66,12 @@ func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
 			isInited = true
 			return nil
 		}
-
 		// GenBar 不接受乱序的 ticks
 		if tick.Date.Before(lastTickDate) {
 			panic("GenBar: Ticks should be sorted in date")
 		}
 		lastTickDate = tick.Date
-
+		//
 		if tickBegin.Equal(bar.Begin) {
 			bar.High = maxFloat64(bar.High, tick.Price)
 			bar.Low = minFloat64(bar.Low, tick.Price)
@@ -80,15 +79,12 @@ func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
 			bar.Volume += tick.Volume
 			return nil
 		}
-
 		res := make([]*Bar, 0, 256)
 		for bar.Begin.Before(tickBegin) {
 			res = append(res, bar)
 			bar = nextEmptyBar(bar, interval)
 		}
-
 		bar = newBar(tick, tickBegin)
-
 		return res
 	}
 }

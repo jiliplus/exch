@@ -116,18 +116,17 @@ func (l *orderList) canMatch(price float64) bool {
 // 这里没有考虑手续费和滑点。
 // match 前需要使用 canMatch 进行检查， match 内就不再检查了
 func (o order) match(tick exch.Tick) (order, exch.Tick, []exch.Asset) {
-
 	switch o.Type {
 	case exch.MARKET:
 		return matchMarket(o, tick)
 	case exch.LIMIT:
 		return matchLimit(o, tick)
 	default:
-		panic("现在只能处理 limit 和 market 类型。")
+		panic("现在只能处理 limit 和 market 类型")
 	}
 }
 
-func matchMarket(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
+var matchMarket = func(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
 	var asset, capital exch.Asset
 	asset.Name = o.AssetName
 	capital.Name = o.CapitalName
@@ -150,7 +149,7 @@ func matchMarket(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
 	return o, t, []exch.Asset{asset, capital}
 }
 
-func matchLimit(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
+var matchLimit = func(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
 	var asset, capital exch.Asset
 	asset.Name = o.AssetName
 	capital.Name = o.CapitalName
