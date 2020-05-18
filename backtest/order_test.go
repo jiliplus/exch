@@ -9,6 +9,13 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+// de 方便生成 order
+func de(i interface{}) *order {
+	enc := exch.EncFunc()
+	dec := decOrderFunc()
+	return dec(enc(i))
+}
+
 func Test_DecOrderFunc(t *testing.T) {
 	Convey("反向序列化 order", t, func() {
 		asset := "BTC"
@@ -37,14 +44,9 @@ func Test_DecOrderFunc(t *testing.T) {
 }
 
 func Test_order_isLessThan(t *testing.T) {
-	enc := exch.EncFunc()
-	dec := decOrderFunc()
-	de := func(i interface{}) *order {
-		return dec(enc(i))
-	}
-	Convey("Order less function", t, func() {
+	Convey("测试 order.isLessThan", t, func() {
 		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
-		Convey("nil 的 order 会返回 false", func() {
+		Convey("nil.isLessThan 会返回 false", func() {
 			var nilOrder *order
 			So(nilOrder.isLessThan(nil), ShouldBeFalse)
 		})
@@ -149,13 +151,6 @@ func checkMatch(
 	})
 }
 
-// de 方便生成 order
-func de(i interface{}) *order {
-	enc := exch.EncFunc()
-	dec := decOrderFunc()
-	return dec(enc(i))
-}
-
 func Test_matchMarket(t *testing.T) {
 	Convey("matchMarket 撮合市价单", t, func() {
 		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
@@ -172,7 +167,7 @@ func Test_matchMarket(t *testing.T) {
 		eAsset := exch.NewAsset(BtcUsdtOrder.AssetName, 0, 0)
 		eCapital := exch.NewAsset(BtcUsdtOrder.CapitalName, 0, 0)
 		//
-		Convey("BUY 时", func() {
+		Convey("匹配 BUY 时", func() {
 			capitalQuantity := 10000.
 			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, capitalQuantity)))
 			tk := exch.NewTick(0, time.Now(), 1000, 100)
@@ -216,7 +211,7 @@ func Test_matchMarket(t *testing.T) {
 				checkMatch(matchMarket, *mb, eo, tk, et, eAsset, eCapital)
 			})
 		})
-		Convey("SELL 时", func() {
+		Convey("匹配 SELL 时", func() {
 			assetQuantity := 100.
 			ms := de(BtcUsdtOrder.With(exch.Market(exch.SELL, assetQuantity)))
 			tk := exch.NewTick(0, time.Now(), 1000, 100)
@@ -279,7 +274,7 @@ func Test_matchLimit(t *testing.T) {
 		eAsset := exch.NewAsset(BtcUsdtOrder.AssetName, 0, 0)
 		eCapital := exch.NewAsset(BtcUsdtOrder.CapitalName, 0, 0)
 		//
-		Convey("SELL 时", func() {
+		Convey("匹配 SELL 时", func() {
 			quantity, price := 10000., 100.
 			ls := de(BtcUsdtOrder.With(exch.Limit(exch.SELL, quantity, price)))
 			tk := exch.NewTick(0, time.Now(), 1000, 100)
@@ -378,7 +373,7 @@ func Test_matchLimit(t *testing.T) {
 				})
 			})
 		})
-		Convey("BUY 时", func() {
+		Convey("匹配 BUY 时", func() {
 			quantity, price := 10000., 100.
 			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, quantity, price)))
 			tk := exch.NewTick(0, time.Now(), 1000, 100)
@@ -494,7 +489,7 @@ func Test_order_match(t *testing.T) {
 				lb.match(tk)
 			}, ShouldPanicWith, "现在只能处理 limit 和 market 类型")
 		})
-		Convey("MARKET 的 order.match 会调用 matchMarket", func() {
+		Convey("匹配 MARKET 单时", func() {
 			hasCalled := false
 			stubs := gostub.Stub(&matchMarket, func(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
 				hasCalled = true
@@ -509,7 +504,7 @@ func Test_order_match(t *testing.T) {
 			})
 		})
 		//
-		Convey("LIMIT 的 order.match 会调用 matchLimit", func() {
+		Convey("匹配 LIMIT 单时", func() {
 			hasCalled := false
 			stubs := gostub.Stub(&matchLimit, func(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
 				hasCalled = true
@@ -521,6 +516,256 @@ func Test_order_match(t *testing.T) {
 			ls.match(tk)
 			Convey("matchLimit 应该被调用了", func() {
 				So(hasCalled, ShouldBeTrue)
+			})
+		})
+	})
+}
+
+func Test_order_pend2Lock(t *testing.T) {
+	Convey("测试 order.pend2Lock", t, func() {
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
+		Convey("输入别的类型的 order 会 panic", func() {
+			lb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
+			lb.Type = 3
+			// NOTICE: order.match 匹配的返回扩大以后，需要修改这个断言。
+			So(lb.Type, ShouldNotBeBetweenOrEqual, 1, 2)
+			So(func() {
+				lb.pend2Lock()
+			}, ShouldPanicWith, "现在只能处理 limit 和 market 类型")
+		})
+		Convey("挂 MARKET 订单时", func() {
+			hasCalled := false
+			stubs := gostub.Stub(&pendMarket, func(o order) exch.Asset {
+				hasCalled = true
+				return exch.Asset{}
+			})
+			defer stubs.Reset()
+			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 1000)))
+			mb.pend2Lock()
+			Convey("pendMarket 应该被调用了", func() {
+				So(hasCalled, ShouldBeTrue)
+			})
+		})
+		Convey("挂 LIMIT 订单时", func() {
+			hasCalled := false
+			stubs := gostub.Stub(&pendLimit, func(o order) exch.Asset {
+				hasCalled = true
+				return exch.Asset{}
+			})
+			defer stubs.Reset()
+			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, 1000, 1000)))
+			lb.pend2Lock()
+			Convey("pendLimit 应该被调用了", func() {
+				So(hasCalled, ShouldBeTrue)
+			})
+		})
+	})
+}
+
+func Test_pendMarket(t *testing.T) {
+	Convey("测试 pendMarket", t, func() {
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
+		Convey("输入非 MARKET 类型", func() {
+			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, 0, 0)))
+			So(lb.Type, ShouldNotEqual, exch.MARKET)
+			Convey("会 panic", func() {
+				So(func() {
+					pendMarket(*lb)
+				}, ShouldPanic)
+			})
+		})
+		//
+		eAsset := exch.NewAsset(BtcUsdtOrder.AssetName, 0, 0)
+		eCapital := exch.NewAsset(BtcUsdtOrder.CapitalName, 0, 0)
+		//
+		Convey("挂 BUY 单会冻结 Capital", func() {
+			quantity := 1000.
+			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, quantity)))
+			eCapital.Free = -quantity
+			eCapital.Locked = quantity
+			ac := pendMarket(*mb)
+			Convey("Asset 应该符合预期", func() {
+				So(ac, ShouldResemble, eCapital)
+			})
+		})
+		Convey("挂 SELL 单会冻结 Asset", func() {
+			quantity := 1000.
+			ms := de(BtcUsdtOrder.With(exch.Market(exch.SELL, quantity)))
+			eAsset.Free = -quantity
+			eAsset.Locked = quantity
+			aa := pendMarket(*ms)
+			Convey("Asset 应该符合预期", func() {
+				So(aa, ShouldResemble, eAsset)
+			})
+		})
+	})
+}
+
+func Test_pendLimit(t *testing.T) {
+	Convey("测试 pendLimit", t, func() {
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
+		Convey("输入非 LIMIT 类型", func() {
+			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 0)))
+			So(mb.Type, ShouldNotEqual, exch.LIMIT)
+			Convey("会 panic", func() {
+				So(func() {
+					pendLimit(*mb)
+				}, ShouldPanic)
+			})
+		})
+		//
+		eAsset := exch.NewAsset(BtcUsdtOrder.AssetName, 0, 0)
+		eCapital := exch.NewAsset(BtcUsdtOrder.CapitalName, 0, 0)
+		//
+		Convey("挂 BUY 单会冻结 Capital", func() {
+			price := 10000.
+			quantity := 100.
+			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, quantity, price)))
+			total := quantity * price
+			eCapital.Free = -total
+			eCapital.Locked = total
+			ac := pendLimit(*lb)
+			Convey("Asset 应该符合预期", func() {
+				So(ac, ShouldResemble, eCapital)
+			})
+		})
+		Convey("挂 SELL 单会冻结 Asset", func() {
+			price := 10000.
+			quantity := 100.
+			ls := de(BtcUsdtOrder.With(exch.Limit(exch.SELL, quantity, price)))
+			eAsset.Free = -quantity
+			eAsset.Locked = quantity
+			aa := pendLimit(*ls)
+			Convey("Asset 应该符合预期", func() {
+				So(aa, ShouldResemble, eAsset)
+			})
+		})
+	})
+}
+
+func Test_order_cancel2Free(t *testing.T) {
+	Convey("测试 order.cancel2Free", t, func() {
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
+		Convey("输入别的类型的 order 会 panic", func() {
+			lb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
+			lb.Type = 3
+			// NOTICE: order.match 匹配的返回扩大以后，需要修改这个断言。
+			So(lb.Type, ShouldNotBeBetweenOrEqual, 1, 2)
+			So(func() {
+				lb.cancel2Free()
+			}, ShouldPanicWith, "现在只能处理 limit 和 market 类型")
+		})
+		Convey("撤销 MARKET 类型的订单", func() {
+			hasCalled := false
+			stubs := gostub.Stub(&cancelMarket, func(o order) exch.Asset {
+				hasCalled = true
+				return exch.Asset{}
+			})
+			defer stubs.Reset()
+			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 1000)))
+			mb.cancel2Free()
+			Convey("cancelMarket 应该被调用了", func() {
+				So(hasCalled, ShouldBeTrue)
+			})
+		})
+		Convey("撤销 LIMIT 类型的订单", func() {
+			hasCalled := false
+			stubs := gostub.Stub(&cancelLimit, func(o order) exch.Asset {
+				hasCalled = true
+				return exch.Asset{}
+			})
+			defer stubs.Reset()
+			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, 1000, 1000)))
+			lb.cancel2Free()
+			Convey("cancelLimit 应该被调用了", func() {
+				So(hasCalled, ShouldBeTrue)
+			})
+		})
+	})
+}
+
+func Test_cancelMarket(t *testing.T) {
+	Convey("测试 cancelMarket", t, func() {
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
+		Convey("输入非 MARKET 类型", func() {
+			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, 0, 0)))
+			So(lb.Type, ShouldNotEqual, exch.MARKET)
+			Convey("会 panic", func() {
+				So(func() {
+					cancelMarket(*lb)
+				}, ShouldPanic)
+			})
+		})
+		//
+		eAsset := exch.NewAsset(BtcUsdtOrder.AssetName, 0, 0)
+		eCapital := exch.NewAsset(BtcUsdtOrder.CapitalName, 0, 0)
+		//
+		Convey("撤销 BUY 单会释放 Capital", func() {
+			quantity := 1000.
+			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, quantity)))
+			eCapital.Free = quantity
+			eCapital.Locked = -quantity
+			ac := cancelMarket(*mb)
+			Convey("Asset 应该符合预期", func() {
+				So(ac, ShouldResemble, eCapital)
+			})
+		})
+		Convey("撤销 SELL 单会释放 Asset", func() {
+			quantity := 1000.
+			ms := de(BtcUsdtOrder.With(exch.Market(exch.SELL, quantity)))
+			eAsset.Free = quantity
+			eAsset.Locked = -quantity
+			aa := cancelMarket(*ms)
+			Convey("Asset 应该符合预期", func() {
+				So(aa, ShouldResemble, eAsset)
+			})
+		})
+	})
+}
+
+func Test_cancelLimit(t *testing.T) {
+	Convey("测试 cancelLimit", t, func() {
+		BtcUsdtOrder := exch.NewOrder("BTCUSDT", "BTC", "USDT")
+		//
+		Convey("输入非 LIMIT 类型", func() {
+			mb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 0)))
+			So(mb.Type, ShouldNotEqual, exch.LIMIT)
+			Convey("会 panic", func() {
+				So(func() {
+					cancelLimit(*mb)
+				}, ShouldPanic)
+			})
+		})
+		//
+		eAsset := exch.NewAsset(BtcUsdtOrder.AssetName, 0, 0)
+		eCapital := exch.NewAsset(BtcUsdtOrder.CapitalName, 0, 0)
+		//
+		Convey("撤销 BUY 单会释放 Capital", func() {
+			price := 10000.
+			quantity := 100.
+			lb := de(BtcUsdtOrder.With(exch.Limit(exch.BUY, quantity, price)))
+			total := quantity * price
+			eCapital.Free = total
+			eCapital.Locked = -total
+			ac := cancelLimit(*lb)
+			Convey("Asset 应该符合预期", func() {
+				So(ac, ShouldResemble, eCapital)
+			})
+		})
+		Convey("撤销 SELL 单会释放 Asset", func() {
+			price := 10000.
+			quantity := 100.
+			ls := de(BtcUsdtOrder.With(exch.Limit(exch.SELL, quantity, price)))
+			eAsset.Free = quantity
+			eAsset.Locked = -quantity
+			ac := cancelLimit(*ls)
+			Convey("Asset 应该符合预期", func() {
+				So(ac, ShouldResemble, eAsset)
 			})
 		})
 	})

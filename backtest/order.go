@@ -134,3 +134,95 @@ var matchLimit = func(o order, t exch.Tick) (order, exch.Tick, []exch.Asset) {
 	o.AssetQuantity -= diff
 	return o, t, []exch.Asset{asset, capital}
 }
+
+func (o *order) pend2Lock() exch.Asset {
+	switch o.Type {
+	case exch.MARKET:
+		return pendMarket(*o)
+	case exch.LIMIT:
+		return pendLimit(*o)
+	default:
+		panic("现在只能处理 limit 和 market 类型")
+	}
+}
+
+var pendMarket = func(o order) exch.Asset {
+	var res exch.Asset
+	if o.Type != exch.MARKET {
+		panic("pendMarket 应该输入 MARKET 类型的 order")
+	}
+	if o.Side == exch.BUY {
+		res.Name = o.CapitalName
+		res.Free = -o.CapitalQuantity
+		res.Locked = o.CapitalQuantity
+	} else { // o.Side == exch.SELL
+		res.Name = o.AssetName
+		res.Free = -o.AssetQuantity
+		res.Locked = o.AssetQuantity
+	}
+	return res
+}
+
+var pendLimit = func(o order) exch.Asset {
+	var res exch.Asset
+	if o.Type != exch.LIMIT {
+		panic("pendLimit 应该输入 LIMIT 类型的 order")
+	}
+	if o.Side == exch.BUY {
+		res.Name = o.CapitalName
+		total := o.AssetQuantity * o.AssetPrice
+		res.Free = -total
+		res.Locked = total
+	} else { // o.Side == exch.SELL
+		res.Name = o.AssetName
+		res.Free = -o.AssetQuantity
+		res.Locked = o.AssetQuantity
+	}
+	return res
+}
+
+func (o *order) cancel2Free() exch.Asset {
+	switch o.Type {
+	case exch.MARKET:
+		return cancelMarket(*o)
+	case exch.LIMIT:
+		return cancelLimit(*o)
+	default:
+		panic("现在只能处理 limit 和 market 类型")
+	}
+}
+
+var cancelMarket = func(o order) exch.Asset {
+	var res exch.Asset
+	if o.Type != exch.MARKET {
+		panic("cancelMarket 应该输入 MARKET 类型的 order")
+	}
+	if o.Side == exch.BUY {
+		res.Name = o.CapitalName
+		res.Free = o.CapitalQuantity
+		res.Locked = -o.CapitalQuantity
+	} else { // o.Side == exch.SELL
+		res.Name = o.AssetName
+		res.Free = o.AssetQuantity
+		res.Locked = -o.AssetQuantity
+	}
+	return res
+}
+
+var cancelLimit = func(o order) exch.Asset {
+	var res exch.Asset
+	if o.Type != exch.LIMIT {
+		panic("cancelLimit 应该输入 LIMIT 类型的 order")
+	}
+	if o.Side == exch.BUY {
+		res.Name = o.CapitalName
+		total := o.AssetQuantity * o.AssetPrice
+		res.Free = total
+		res.Locked = -total
+	} else { // o.Side == exch.SELL
+		res.Name = o.AssetName
+		res.Free = o.AssetQuantity
+		res.Locked = -o.AssetQuantity
+	}
+	return res
+}
