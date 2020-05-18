@@ -33,16 +33,21 @@ func DecBalanceFunc() func(bs []byte) *Balance {
 	}
 }
 
-// Change change *Balance with a slice of Asset
-func (b *Balance) Change(as ...Asset) {
+// Add change *Balance with a slice of Asset
+func (b *Balance) Add(as ...Asset) {
 	for _, a := range as {
-		(*b)[a.Name] = (*b)[a.Name].Change(a)
+		old, ok := (*b)[a.Name]
+		if ok {
+			(*b)[a.Name] = old.Add(a)
+		} else {
+			(*b)[a.Name] = a
+		}
 	}
 }
 
 // Total count the total value of balance
 // TODO: 把 prices 变成了一个对象，这样就可以方便地统计成不同货币的总价
-func (b *Balance) Total(prices map[string]float64) {
+func (b *Balance) Total(prices map[string]float64) float64 {
 	var total float64
 	for name, asset := range *b {
 		price, ok := prices[name]
@@ -52,6 +57,7 @@ func (b *Balance) Total(prices map[string]float64) {
 		}
 		total += asset.Total() * price
 	}
+	return total
 }
 
 // Asset 代表了交易所中，某一项资产的状态和数目
@@ -70,8 +76,8 @@ func NewAsset(name string, free, locked float64) Asset {
 	}
 }
 
-// Change return new asset by a change with delta
-func (a Asset) Change(delta Asset) Asset {
+// Add return new asset by a change with delta
+func (a Asset) Add(delta Asset) Asset {
 	if a.Name != delta.Name {
 		panic("Asset can NOT change with a different asset")
 	}
@@ -79,24 +85,6 @@ func (a Asset) Change(delta Asset) Asset {
 		a.Name,
 		a.Free+delta.Free,
 		a.Locked+delta.Locked,
-	)
-}
-
-// UnlockAll unlock all locked asset
-func (a Asset) UnlockAll() Asset {
-	return NewAsset(
-		a.Name,
-		a.Free+a.Locked,
-		0,
-	)
-}
-
-// LockAll lock all free asset
-func (a Asset) LockAll() Asset {
-	return NewAsset(
-		a.Name,
-		0,
-		a.Locked+a.Free,
 	)
 }
 

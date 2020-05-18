@@ -9,15 +9,7 @@ import (
 
 func Test_DecTickFunc(t *testing.T) {
 	Convey("反向序列化 Tick", t, func() {
-		expected := &Tick{
-			// Exchange: OKEX,
-			// Symbol:   "BTCUSDT",
-			ID:     110,
-			Date:   time.Now(),
-			Price:  1222,
-			Volume: 100,
-			// Type:   "Type",
-		}
+		expected := NewTick(110, time.Now(), 122, 100)
 		enc := EncFunc()
 		dec := DecTickFunc()
 		actual := dec(enc(expected))
@@ -27,7 +19,7 @@ func Test_DecTickFunc(t *testing.T) {
 				So(actual.Date.Equal(expected.Date), ShouldBeTrue)
 				actual.Date = expected.Date
 				// 没有上面两行，直接使用下面的判断语句会报错，
-				So(*actual, ShouldResemble, *expected)
+				So(*actual, ShouldResemble, expected)
 			})
 		})
 	})
