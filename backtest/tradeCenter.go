@@ -51,8 +51,8 @@ func NewBackTest(ctx context.Context, ps pubsub, balance exch.Balance) {
 			log.Println("ctx.Done", ctx.Err())
 		case msg := <-ticks:
 			tick := decTick(msg.Payload)
-			buys.match(*tick)
-			sells.match(*tick)
+			buys.match(tick)
+			sells.match(tick)
 			msg.Ack()
 		case <-bars:
 			// case msg := <-bars:

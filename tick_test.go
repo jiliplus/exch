@@ -19,7 +19,7 @@ func Test_DecTickFunc(t *testing.T) {
 				So(actual.Date.Equal(expected.Date), ShouldBeTrue)
 				actual.Date = expected.Date
 				// 没有上面两行，直接使用下面的判断语句会报错，
-				So(*actual, ShouldResemble, expected)
+				So(actual, ShouldResemble, expected)
 			})
 		})
 	})
