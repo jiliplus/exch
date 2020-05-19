@@ -1,5 +1,7 @@
 package backtest
 
+import "github.com/jujili/exch"
+
 type orderList struct {
 	head *order
 }
@@ -37,4 +39,7 @@ func (l *orderList) canMatch(price float64) bool {
 	}
 	order := l.head.next
 	return order.canMatch(price)
+}
+
+func (l *orderList) match(t exch.Tick) {
 }

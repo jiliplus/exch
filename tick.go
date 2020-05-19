@@ -32,6 +32,7 @@ func NewTick(id int64, date time.Time, price, volume float64) Tick {
 }
 
 // DecTickFunc 返回的函数会把序列化成 []byte 的 Balances 值转换回来
+// TODO: 把最终返回值修改成 Tick，把 Tick 当作值对象，不需要返回指针
 func DecTickFunc() func(bs []byte) *Tick {
 	var bb bytes.Buffer
 	dec := gob.NewDecoder(&bb)
