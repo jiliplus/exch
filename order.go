@@ -73,7 +73,6 @@ func (t OrderType) String() string {
 }
 
 // Order 是下单的格式
-// TODO: 下单的 order 和挂单的 order 有什么区别吗？
 type Order struct {
 	Symbol      string
 	AssetName   string

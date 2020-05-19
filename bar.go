@@ -15,7 +15,6 @@ type Bar struct {
 	// 为了节约空间，不要保存在数据库中
 	Symbol   string
 	Exchange Name
-	// TODO: Interval 有必要吗
 	Interval time.Duration
 }
 
@@ -44,7 +43,6 @@ func newBar(tick *Tick, date time.Time) *Bar {
 }
 
 // GenBarFunc 会返回一个接收 tick 并生成 bar 的闭包函数
-// TODO: 完成这个闭包函数
 // 有以下情况需要处理
 // 1. 接收第一个 tick,
 //    不返回 bar
