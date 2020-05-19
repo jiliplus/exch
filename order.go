@@ -146,7 +146,6 @@ func DecOrderFunc() func(bs []byte) *Order {
 }
 
 // IsLessThan return true if o < a
-// REVIEW: 当 Order 的 Type 增加以后，这个方法会爆炸。
 func (o *Order) IsLessThan(a *Order) bool {
 	if o.Side != a.Side {
 		panic("only compare with the same side")

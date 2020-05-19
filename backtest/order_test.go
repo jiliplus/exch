@@ -29,7 +29,6 @@ func Test_DecOrderFunc(t *testing.T) {
 			dec := decOrderFunc()
 			actual := dec(enc(source))
 			Convey("具体的值，应该相同", func() {
-				// REVIEW: 这里的比较方式太 low 了
 				So(actual.ID, ShouldEqual, source.ID)
 				So(actual.AssetName, ShouldEqual, source.AssetName)
 				So(actual.CapitalName, ShouldEqual, source.CapitalName)
@@ -482,7 +481,6 @@ func Test_order_match(t *testing.T) {
 		Convey("输入别的类型的 order 会 panic", func() {
 			lb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
 			lb.Type = 3
-			// NOTICE: order.match 匹配的返回扩大以后，需要修改这个断言。
 			So(lb.Type, ShouldNotBeBetweenOrEqual, 1, 2)
 			So(func() {
 				var tk exch.Tick
@@ -528,7 +526,6 @@ func Test_order_pend2Lock(t *testing.T) {
 		Convey("输入别的类型的 order 会 panic", func() {
 			lb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
 			lb.Type = 3
-			// NOTICE: order.match 匹配的返回扩大以后，需要修改这个断言。
 			So(lb.Type, ShouldNotBeBetweenOrEqual, 1, 2)
 			So(func() {
 				lb.pend2Lock()
@@ -653,7 +650,6 @@ func Test_order_cancel2Free(t *testing.T) {
 		Convey("输入别的类型的 order 会 panic", func() {
 			lb := de(BtcUsdtOrder.With(exch.Market(exch.BUY, 100000)))
 			lb.Type = 3
-			// NOTICE: order.match 匹配的返回扩大以后，需要修改这个断言。
 			So(lb.Type, ShouldNotBeBetweenOrEqual, 1, 2)
 			So(func() {
 				lb.cancel2Free()
