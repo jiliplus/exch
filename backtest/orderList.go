@@ -31,8 +31,6 @@ func (l *orderList) pop() *order {
 	return res
 }
 
-// TODO: sellOrderList 和 buyOrderList 都存在 MARKET 订单，要如何处理。
-
 func (l *orderList) canMatch(price float64) bool {
 	if l.head.next == nil {
 		return false

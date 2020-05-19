@@ -46,7 +46,6 @@ func (b *Balance) Add(as ...Asset) {
 }
 
 // Total count the total value of balance
-// TODO: 把 prices 变成了一个对象，这样就可以方便地统计成不同货币的总价
 func (b *Balance) Total(prices map[string]float64) float64 {
 	var total float64
 	for name, asset := range *b {
