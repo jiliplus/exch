@@ -41,5 +41,14 @@ func (l *orderList) canMatch(price float64) bool {
 	return order.canMatch(price)
 }
 
-func (l *orderList) match(t exch.Tick) {
+func (l *orderList) match(tick exch.Tick) []exch.Asset {
+	res := make([]exch.Asset, 0, 16)
+	var as []exch.Asset
+	var order order
+	for tick.Volume != 0 && l.canMatch(tick.Price) {
+		order, tick, as = l.pop().match(tick)
+		res = append(res, as...)
+	}
+	l.push(&order)
+	return res
 }
