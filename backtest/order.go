@@ -76,6 +76,7 @@ func (o *order) sidePrice() float64 {
 // 对于每个 tick 总是认为可以撮合成功，形成交易的。
 // 这里没有考虑手续费和滑点。
 // match 前需要使用 canMatch 进行检查， match 内就不再检查了
+// TODO: 测试空订单
 func (o order) match(tick exch.Tick) (order, exch.Tick, []exch.Asset) {
 	switch o.Type {
 	case exch.MARKET:

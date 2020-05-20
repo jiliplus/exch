@@ -14,12 +14,29 @@ func newOrderList() *orderList {
 	}
 }
 
-func (l *orderList) push(a *order) {
+func (l *orderList) isEmpty() bool {
+	return l.head.next == nil
+}
+
+func (l *orderList) push(a *order) exch.Asset {
 	curr, next := l.head, l.head.next
 	for next.isLessThan(a) {
 		curr, next = next, next.next
 	}
 	curr.next, a.next = a, next
+	return a.pend2Lock()
+}
+
+func (l *orderList) remove(a *order) exch.Asset {
+	curr, next := l.head, l.head.next
+	for next != nil && next.ID != a.ID {
+		curr, next = next, next.next
+	}
+	if next == nil {
+		return exch.NewAsset(a.AssetName, 0, 0)
+	}
+	curr.next = next.next
+	return next.cancel2Free()
 }
 
 func (l *orderList) pop() *order {
@@ -47,6 +64,6 @@ func (l *orderList) match(tick exch.Tick) []exch.Asset {
 		order, tick, as = l.pop().match(tick)
 		res = append(res, as...)
 	}
-	l.push(&order)
+	l.push(&order) // order 此时有可能是空订单
 	return res
 }
