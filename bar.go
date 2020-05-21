@@ -70,6 +70,9 @@ func newTickBar(tick Tick, begin time.Time, interval time.Duration) Bar {
 // 	return &res
 // }
 
+// NilTick 只是一个标志
+var NilTick = Tick{}
+
 // GenTickBarFunc 会返回一个接收 tick 并生成 bar 的闭包函数
 // 有以下情况需要处理
 // 1. 接收第一个 tick,
@@ -91,6 +94,10 @@ func GenTickBarFunc(begin BeginFunc, interval time.Duration) func(Tick) []Bar {
 			lastTickDate = tick.Date
 			isInited = true
 			return nil
+		}
+		// 当 tick 发送完毕以后，需要把最后一个 bar 逼出来
+		if tick == NilTick {
+			return []Bar{bar}
 		}
 		// GenBar 不接受乱序的 ticks
 		if tick.Date.Before(lastTickDate) {
