@@ -12,7 +12,7 @@ func Test_GenBarFunc(t *testing.T) {
 		date := time.Now()
 		interval := time.Minute
 		gb := GenTickBarFunc(Begin, interval)
-		tick := &Tick{
+		tick := Tick{
 			Date:   date,
 			Price:  1.0,
 			Volume: 1.0,
@@ -24,7 +24,7 @@ func Test_GenBarFunc(t *testing.T) {
 			})
 			Convey("输入更早的 tick 会 panic", func() {
 				So(func() {
-					tick := &Tick{Date: date.Add(-time.Second)}
+					tick := Tick{Date: date.Add(-time.Second)}
 					gb(tick)
 				}, ShouldPanic)
 			})
@@ -103,13 +103,13 @@ func Test_newTickBar(t *testing.T) {
 		Convey("如果想要生成的 bar 的起始时间太早，会 panic", func() {
 			tooEarly := begin.Add(-interval)
 			So(func() {
-				newTickBar(&tick, tooEarly, interval)
+				newTickBar(tick, tooEarly, interval)
 			}, ShouldPanic)
 		})
 		Convey("如果想要生成的 bar 的起始时间太晚，会 panic", func() {
 			tooLate := begin.Add(interval)
 			So(func() {
-				newTickBar(&tick, tooLate, interval)
+				newTickBar(tick, tooLate, interval)
 			}, ShouldPanic)
 		})
 	})

@@ -28,7 +28,7 @@ func DecBarFunc() func(bs []byte) Bar {
 }
 
 // newTickBar make the first bar from a tick
-func newTickBar(tick *Tick, begin time.Time, interval time.Duration) *Bar {
+func newTickBar(tick Tick, begin time.Time, interval time.Duration) *Bar {
 	tU := tick.Date.Unix()
 	beginU := begin.Unix()
 	endU := begin.Add(interval).Unix()
@@ -80,11 +80,11 @@ func newTickBar(tick *Tick, begin time.Time, interval time.Duration) *Bar {
 //    返回上一个 bar
 // 4. 接收到下一个 interval 后面的 interval 的 tick，市场冷清，长时间没有交易
 //    返回多个 bar
-func GenTickBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
+func GenTickBarFunc(begin BeginFunc, interval time.Duration) func(Tick) []*Bar {
 	isInited := false
 	var bar *Bar
 	var lastTickDate time.Time
-	return func(tick *Tick) []*Bar {
+	return func(tick Tick) []*Bar {
 		tickBegin := begin(tick.Date, interval)
 		if !isInited {
 			bar = newTickBar(tick, tickBegin, interval)
