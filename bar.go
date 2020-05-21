@@ -9,36 +9,33 @@ import (
 // Bar 实现了 k 线的相关方法
 type Bar struct {
 	Begin                  time.Time
+	Interval               time.Duration
 	Open, High, Low, Close float64
 	Volume                 float64
-	// 以下属性可以通过其他方式获取
-	// 为了节约空间，不要保存在数据库中
-	Symbol   string
-	Exchange Name
-	Interval time.Duration
 }
 
 // DecBarFunc 返回的函数会把序列化成 []byte 的 Bar 值转换回来
-func DecBarFunc() func(bs []byte) *Bar {
+func DecBarFunc() func(bs []byte) Bar {
 	var bb bytes.Buffer
 	dec := gob.NewDecoder(&bb)
-	return func(bs []byte) *Bar {
+	return func(bs []byte) Bar {
 		bb.Reset()
 		bb.Write(bs)
 		var bar Bar
 		dec.Decode(&bar)
-		return &bar
+		return bar
 	}
 }
 
-func newBar(tick *Tick, date time.Time) *Bar {
+func newBar(tick *Tick, date time.Time, interval time.Duration) *Bar {
 	return &Bar{
-		Begin:  date,
-		Open:   tick.Price,
-		High:   tick.Price,
-		Low:    tick.Price,
-		Close:  tick.Price,
-		Volume: tick.Volume,
+		Begin:    date,
+		Interval: interval,
+		Open:     tick.Price,
+		High:     tick.Price,
+		Low:      tick.Price,
+		Close:    tick.Price,
+		Volume:   tick.Volume,
 	}
 }
 
@@ -59,7 +56,7 @@ func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
 	return func(tick *Tick) []*Bar {
 		tickBegin := begin(tick.Date, interval)
 		if !isInited {
-			bar = newBar(tick, tickBegin)
+			bar = newBar(tick, tickBegin, interval)
 			lastTickDate = tick.Date
 			isInited = true
 			return nil
@@ -82,7 +79,7 @@ func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
 			res = append(res, bar)
 			bar = nextEmptyBar(bar, interval)
 		}
-		bar = newBar(tick, tickBegin)
+		bar = newBar(tick, tickBegin, interval)
 		return res
 	}
 }
