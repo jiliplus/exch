@@ -10,7 +10,7 @@ import (
 type Bar struct {
 	Begin                  time.Time
 	Interval               time.Duration
-	Open, High, Low, Close float64
+	Open, High, Low, Close float64 // Price
 	Volume                 float64
 }
 
@@ -25,6 +25,31 @@ func DecBarFunc() func(bs []byte) Bar {
 		dec.Decode(&bar)
 		return bar
 	}
+}
+
+// newTickBar make the first bar from a tick
+func newTickBar(tick *Tick, interval time.Duration) *Bar {
+	return &Bar{
+		Begin:    Begin(tick.Date, interval),
+		Interval: interval,
+		Open:     tick.Price,
+		High:     tick.Price,
+		Low:      tick.Price,
+		Close:    tick.Price,
+		Volume:   tick.Volume,
+	}
+}
+
+// newBarBar make the first bar from another kind bar
+func newBarBar(bar *Bar, interval time.Duration) *Bar {
+	if !(bar.Interval < interval) {
+		panic("newBarBar: the new Bar's interval should greater then the old one's")
+	}
+	var res Bar
+	res = *bar
+	res.Begin = Begin(bar.Begin, interval)
+	res.Interval = interval
+	return &res
 }
 
 func newBar(tick *Tick, date time.Time, interval time.Duration) *Bar {

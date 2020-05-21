@@ -5,16 +5,14 @@ import (
 )
 
 // BeginFunc 会根据 time 和 interval 计算 time 所在周期的开始时间
+// TODO: 思考一下是否要公开这个函数
 type BeginFunc func(time.Time, time.Duration) time.Time
 
 // Begin 会根据 time 和 interval 计算 time 所在周期的开始时间
-// Begin 认为 1970-01-01 00:00:00 +0000 UTC 是第一个周期的起点，
-// 然后计算当前周期的起点
-// Begin 不会改变 t 的 location 信息
-func Begin(t time.Time, d time.Duration) time.Time {
-	loc := t.Location()
-	utc := t.Unix()
-	sec := int64(d / time.Second)
-	utc = utc / sec * sec
-	return time.Unix(utc, 0).In(loc)
+// 当 interval 的单位
+//   为分钟或秒时，推荐值为 1,2,3,4,5,6,10,12,15,20,30,60
+//   为小时时，   推荐值为 1,2,3,4,6,8,12,24
+// NOTICE: 由于每个月的时间长度不一致，无法计算月线的起始日期。年线同理。
+func Begin(date time.Time, interval time.Duration) time.Time {
+	return date.Add(-interval / 2).Round(interval)
 }

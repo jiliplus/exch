@@ -13,7 +13,7 @@ func Test_Begin(t *testing.T) {
 	Convey("测试 Begin 函数", t, func() {
 		input, err := time.Parse(layout, "2006-01-02 15:59:58.99")
 		So(err, ShouldBeNil)
-		title := fmt.Sprintf("输入时间为 %s", input)
+		title := fmt.Sprintf("输入时间为 %s，%s", input, input.Weekday())
 		Convey(title, func() {
 			Convey("间隔为 1 分钟", func() {
 				d := time.Minute
@@ -95,6 +95,34 @@ func Test_Begin(t *testing.T) {
 			Convey("间隔为 60 分钟", func() {
 				d := time.Minute * 60
 				expected, err := time.Parse(layout, "2006-01-02 15:00:00")
+				So(err, ShouldBeNil)
+				actual := Begin(input, d)
+				So(actual, ShouldEqual, expected)
+			})
+			Convey("间隔为 14 分钟", func() {
+				d := time.Minute * 14
+				expected, err := time.Parse(layout, "2006-01-02 15:52:00")
+				So(err, ShouldBeNil)
+				actual := Begin(input, d)
+				So(actual, ShouldEqual, expected)
+			})
+			Convey("间隔为 2 小时", func() {
+				d := 2 * time.Hour
+				expected, err := time.Parse(layout, "2006-01-02 14:00:00")
+				So(err, ShouldBeNil)
+				actual := Begin(input, d)
+				So(actual, ShouldEqual, expected)
+			})
+			Convey("间隔为 4 小时", func() {
+				d := 4 * time.Hour
+				expected, err := time.Parse(layout, "2006-01-02 12:00:00")
+				So(err, ShouldBeNil)
+				actual := Begin(input, d)
+				So(actual, ShouldEqual, expected)
+			})
+			Convey("间隔为 7 天", func() {
+				d := 7 * 24 * time.Hour
+				expected, err := time.Parse(layout, "2006-01-02 00:00:00")
 				So(err, ShouldBeNil)
 				actual := Begin(input, d)
 				So(actual, ShouldEqual, expected)
