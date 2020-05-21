@@ -28,14 +28,14 @@ func DecBarFunc() func(bs []byte) Bar {
 }
 
 // newTickBar make the first bar from a tick
-func newTickBar(tick Tick, begin time.Time, interval time.Duration) *Bar {
+func newTickBar(tick Tick, begin time.Time, interval time.Duration) Bar {
 	tU := tick.Date.Unix()
 	beginU := begin.Unix()
 	endU := begin.Add(interval).Unix()
 	if !(beginU <= tU && tU < endU) {
 		panic("newTickBar: tick should in begin,interval")
 	}
-	return &Bar{
+	return Bar{
 		Begin:    begin,
 		Interval: interval,
 		Open:     tick.Price,
@@ -80,11 +80,11 @@ func newTickBar(tick Tick, begin time.Time, interval time.Duration) *Bar {
 //    返回上一个 bar
 // 4. 接收到下一个 interval 后面的 interval 的 tick，市场冷清，长时间没有交易
 //    返回多个 bar
-func GenTickBarFunc(begin BeginFunc, interval time.Duration) func(Tick) []*Bar {
+func GenTickBarFunc(begin BeginFunc, interval time.Duration) func(Tick) []Bar {
 	isInited := false
-	var bar *Bar
+	var bar Bar
 	var lastTickDate time.Time
-	return func(tick Tick) []*Bar {
+	return func(tick Tick) []Bar {
 		tickBegin := begin(tick.Date, interval)
 		if !isInited {
 			bar = newTickBar(tick, tickBegin, interval)
@@ -97,7 +97,7 @@ func GenTickBarFunc(begin BeginFunc, interval time.Duration) func(Tick) []*Bar {
 			panic("GenBar: Ticks should be sorted in date")
 		}
 		lastTickDate = tick.Date
-		//
+		// 收到了一个本周期的 tick
 		if tickBegin.Equal(bar.Begin) {
 			bar.High = maxFloat64(bar.High, tick.Price)
 			bar.Low = minFloat64(bar.Low, tick.Price)
@@ -105,22 +105,27 @@ func GenTickBarFunc(begin BeginFunc, interval time.Duration) func(Tick) []*Bar {
 			bar.Volume += tick.Volume
 			return nil
 		}
-		res := make([]*Bar, 0, 256)
+		// 收到了若干个周期后的 tick
+		res := make([]Bar, 0, 256)
 		for bar.Begin.Before(tickBegin) {
 			res = append(res, bar)
-			bar = nextEmptyBar(bar, interval)
+			bar = nextEmptyBar(bar)
 		}
 		bar = newTickBar(tick, tickBegin, interval)
 		return res
 	}
 }
 
-func nextEmptyBar(bar *Bar, interval time.Duration) *Bar {
-	return &Bar{
-		Begin: bar.Begin.Add(interval),
-		Open:  bar.Close,
-		High:  bar.Close,
-		Low:   bar.Close,
-		Close: bar.Close,
+func nextEmptyBar(bar Bar) Bar {
+	begin := bar.Begin.Add(bar.Interval)
+	interval := bar.Interval
+	return Bar{
+		Begin:    begin,
+		Interval: interval,
+		Open:     bar.Close,
+		High:     bar.Close,
+		Low:      bar.Close,
+		Close:    bar.Close,
+		Volume:   0,
 	}
 }
