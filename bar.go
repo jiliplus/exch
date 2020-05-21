@@ -28,9 +28,15 @@ func DecBarFunc() func(bs []byte) Bar {
 }
 
 // newTickBar make the first bar from a tick
-func newTickBar(tick *Tick, interval time.Duration) *Bar {
+func newTickBar(tick *Tick, begin time.Time, interval time.Duration) *Bar {
+	tU := tick.Date.Unix()
+	beginU := begin.Unix()
+	endU := begin.Add(interval).Unix()
+	if !(beginU <= tU && tU < endU) {
+		panic("newTickBar: tick should in begin,interval")
+	}
 	return &Bar{
-		Begin:    Begin(tick.Date, interval),
+		Begin:    begin,
 		Interval: interval,
 		Open:     tick.Price,
 		High:     tick.Price,
@@ -40,31 +46,31 @@ func newTickBar(tick *Tick, interval time.Duration) *Bar {
 	}
 }
 
-// newBarBar make the first bar from another kind bar
-func newBarBar(bar *Bar, interval time.Duration) *Bar {
-	if !(bar.Interval < interval) {
-		panic("newBarBar: the new Bar's interval should greater then the old one's")
-	}
-	var res Bar
-	res = *bar
-	res.Begin = Begin(bar.Begin, interval)
-	res.Interval = interval
-	return &res
-}
+// TODO: uncomment this block, 添加 bar 生成 bar 的相关方法
+// // newBarBar make the first bar from another kind bar
+// func newBarBar(bar *Bar, begin time.Time, interval time.Duration) *Bar {
+// 	bInterval := bar.Interval
+// 	if interval <= bInterval {
+// 		panic("newBarBar: 新 bar 应该比旧 bar 宽")
+// 	}
+// 	bBegin, bEnd := bar.Begin, bar.Begin.Add(bInterval)
+// 	end := begin.Add(interval)
+// 	if !(begin.Unix() < bBegin.Unix() && bEnd.Unix() < end.Unix()) {
+// 		panic("newBarBar: 新 bar 应该完全包住旧 bar")
+// 	}
+// 	if interval%bInterval != 0 {
+// 		panic("newBarBar: 新 bar 的宽度，应该是旧 bar 的整数倍")
+// 	}
+// 	if bBegin.Sub(begin)%bInterval != 0 {
+// 		panic("newBarBar: 新旧 bar 要能够对齐")
+// 	}
+// 	res := *bar
+// 	res.Begin = begin
+// 	res.Interval = interval
+// 	return &res
+// }
 
-func newBar(tick *Tick, date time.Time, interval time.Duration) *Bar {
-	return &Bar{
-		Begin:    date,
-		Interval: interval,
-		Open:     tick.Price,
-		High:     tick.Price,
-		Low:      tick.Price,
-		Close:    tick.Price,
-		Volume:   tick.Volume,
-	}
-}
-
-// GenBarFunc 会返回一个接收 tick 并生成 bar 的闭包函数
+// GenTickBarFunc 会返回一个接收 tick 并生成 bar 的闭包函数
 // 有以下情况需要处理
 // 1. 接收第一个 tick,
 //    不返回 bar
@@ -74,14 +80,14 @@ func newBar(tick *Tick, date time.Time, interval time.Duration) *Bar {
 //    返回上一个 bar
 // 4. 接收到下一个 interval 后面的 interval 的 tick，市场冷清，长时间没有交易
 //    返回多个 bar
-func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
+func GenTickBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
 	isInited := false
 	var bar *Bar
 	var lastTickDate time.Time
 	return func(tick *Tick) []*Bar {
 		tickBegin := begin(tick.Date, interval)
 		if !isInited {
-			bar = newBar(tick, tickBegin, interval)
+			bar = newTickBar(tick, tickBegin, interval)
 			lastTickDate = tick.Date
 			isInited = true
 			return nil
@@ -104,7 +110,7 @@ func GenBarFunc(begin BeginFunc, interval time.Duration) func(*Tick) []*Bar {
 			res = append(res, bar)
 			bar = nextEmptyBar(bar, interval)
 		}
-		bar = newBar(tick, tickBegin, interval)
+		bar = newTickBar(tick, tickBegin, interval)
 		return res
 	}
 }

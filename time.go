@@ -5,7 +5,6 @@ import (
 )
 
 // BeginFunc 会根据 time 和 interval 计算 time 所在周期的开始时间
-// TODO: 思考一下是否要公开这个函数
 type BeginFunc func(time.Time, time.Duration) time.Time
 
 // Begin 会根据 time 和 interval 计算 time 所在周期的开始时间

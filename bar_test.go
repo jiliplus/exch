@@ -11,7 +11,7 @@ func Test_GenBarFunc(t *testing.T) {
 	Convey("把 GenBar 赋值给 gb", t, func() {
 		date := time.Now()
 		interval := time.Minute
-		gb := GenBarFunc(Begin, interval)
+		gb := GenTickBarFunc(Begin, interval)
 		tick := &Tick{
 			Date:   date,
 			Price:  1.0,
@@ -90,6 +90,27 @@ func Test_DecBarFunc(t *testing.T) {
 				// 没有上面两行，直接使用下面的判断语句会报错，
 				So(actual, ShouldResemble, expected)
 			})
+		})
+	})
+}
+
+func Test_newTickBar(t *testing.T) {
+	Convey("想要利用 tick 生成 bar", t, func() {
+		interval := 5 * time.Minute
+		now := time.Now()
+		begin := Begin(now, interval)
+		tick := NewTick(1, now, 1, 1)
+		Convey("如果想要生成的 bar 的起始时间太早，会 panic", func() {
+			tooEarly := begin.Add(-interval)
+			So(func() {
+				newTickBar(&tick, tooEarly, interval)
+			}, ShouldPanic)
+		})
+		Convey("如果想要生成的 bar 的起始时间太晚，会 panic", func() {
+			tooLate := begin.Add(interval)
+			So(func() {
+				newTickBar(&tick, tooLate, interval)
+			}, ShouldPanic)
 		})
 	})
 }
