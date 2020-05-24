@@ -8,17 +8,22 @@ import (
 	"github.com/jujili/exch"
 )
 
-type pubsub interface {
-	publisher
-	subscriber
+// REVIEW: 要不要把 Pubsub 移动到别的地方去，比如 jujili/jili
+
+// Pubsub is a combination of interface of watermill
+type Pubsub interface {
+	Publisher
+	Subscriber
 }
 
-type publisher interface {
+// Publisher is publish interface of watermill
+type Publisher interface {
 	Publish(topic string, messages ...*message.Message) error
 	Close() error
 }
 
-type subscriber interface {
+// Subscriber is publish interface of watermill
+type Subscriber interface {
 	Subscribe(ctx context.Context, topic string) (<-chan *message.Message, error)
 }
 
@@ -31,7 +36,7 @@ type BackTest struct {
 // and
 // bt publish "balance" topic
 //
-func NewBackTest(ctx context.Context, ps pubsub, balance exch.Balance) {
+func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 	sells := newOrderList()
 	buys := newOrderList()
 

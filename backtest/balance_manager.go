@@ -13,11 +13,11 @@ import (
 // TODO: 完成这个功能
 type balanceManager struct {
 	balance *exch.Balance
-	pub     publisher
+	pub     Publisher
 	enc     func(interface{}) []byte
 }
 
-func newBalanceManager(pub publisher) *balanceManager {
+func newBalanceManager(pub Publisher) *balanceManager {
 	b := exch.NewBalances()
 	return &balanceManager{
 		balance: b,

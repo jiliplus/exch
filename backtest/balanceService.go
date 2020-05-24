@@ -13,7 +13,7 @@ import (
 
 // BalanceService 会在每天的凌晨零点零分零秒记录 balance 的总价值
 // prices 里面需要放好各种资产的价格，不要忘记 capital 的价格是 1
-func BalanceService(ctx context.Context, ps pubsub, prices map[string]float64, asset string) {
+func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, asset string) {
 	ticks, err := ps.Subscribe(ctx, "tick")
 	if err != nil {
 		panic(err)

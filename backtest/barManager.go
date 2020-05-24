@@ -15,7 +15,7 @@ import (
 // 生成 Bar 后，会发送数据到对应的话题中。
 // 例如，生成日 bar 线后，发送到 "24h0m0sBar" 话题中
 // 例如，生成 30 日 bar 线后，发送到 "720h0m0sBar" 话题中
-func TickBarService(ctx context.Context, ps pubsub, interval time.Duration) {
+func TickBarService(ctx context.Context, ps Pubsub, interval time.Duration) {
 	topic := fmt.Sprintf("%sBar", interval)
 	log.Printf(`从 tick 生成的 bar 会发送到 "%s" 话题中`, topic)
 	//
