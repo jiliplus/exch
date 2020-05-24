@@ -36,6 +36,7 @@ type BackTest struct {
 // and
 // bt publish "balance" topic
 //
+// TODO: 在成交的时候，还需要发布 "traded" 具体的成交信息。
 func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 	sells := newOrderList()
 	buys := newOrderList()
