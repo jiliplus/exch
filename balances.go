@@ -10,12 +10,12 @@ import (
 type Balance map[string]Asset
 
 // NewBalances returns a new Balances
-func NewBalances(assets ...Asset) *Balance {
+func NewBalances(assets ...Asset) Balance {
 	b := make(Balance, len(assets))
 	for _, a := range assets {
 		b[a.Name] = a
 	}
-	return &b
+	return b
 }
 
 // DecBalanceFunc 返回的函数会把序列化成 []byte 的 Balances 值转换回来

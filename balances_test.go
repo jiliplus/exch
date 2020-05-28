@@ -8,7 +8,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func getABalances() *Balance {
+func getABalances() Balance {
 	a1 := NewAsset("BTC", 100, 200)
 	a2 := NewAsset("DOGE", 900000000, 100000000)
 	return NewBalances(a1, a2)
@@ -18,10 +18,10 @@ func Test_DecBalancesFunc(t *testing.T) {
 	Convey("测试 Balances 的 Decode 函数", t, func() {
 		expected := getABalances()
 		Convey("expected 应该符合预期", func() {
-			a1 := (*expected)["BTC"]
+			a1 := expected["BTC"]
 			e1 := NewAsset("BTC", 100, 200)
 			So(a1, ShouldResemble, e1)
-			a2 := (*expected)["DOGE"]
+			a2 := expected["DOGE"]
 			e2 := NewAsset("DOGE", 900000000, 100000000)
 			So(a2, ShouldResemble, e2)
 		})
@@ -29,7 +29,7 @@ func Test_DecBalancesFunc(t *testing.T) {
 		bs := enc(expected)
 		dec := DecBalanceFunc()
 		actual := dec(bs)
-		So(*actual, ShouldResemble, *expected)
+		So(*actual, ShouldResemble, expected)
 	})
 }
 
@@ -132,11 +132,11 @@ func Test_Balance_Add(t *testing.T) {
 		Convey("Add 第 1 种 Asset", func() {
 			bal.Add(b)
 			Convey("Bal 会发生改变", func() {
-				So((*bal)[b.Name], ShouldResemble, b)
+				So(bal[b.Name], ShouldResemble, b)
 			})
 			Convey("再次添加会翻倍", func() {
 				bal.Add(b)
-				So((*bal)[b.Name], ShouldResemble, b.Add(b))
+				So(bal[b.Name], ShouldResemble, b.Add(b))
 			})
 		})
 	})

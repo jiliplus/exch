@@ -14,7 +14,7 @@ import (
 // 会利用 pulisher 把变动后的值，发送到 "balance" 话题
 // TODO: 完成这个功能
 type balanceManager struct {
-	Balance *exch.Balance
+	Balance exch.Balance
 	pub     Publisher
 	enc     func(interface{}) []byte
 }
@@ -30,8 +30,8 @@ func newBalanceManager(pub Publisher) *balanceManager {
 
 // NOTICE: 并没有核查 bm 内资产的 total，有可能 total 是负值
 func (bm *balanceManager) update(as ...exch.Asset) {
-	bm.Balance.Add(as...)
-	payload := bm.enc((*bm).Balance)
+	bm.Balance = bm.Balance.Add(as...)
+	payload := bm.enc(bm.Balance)
 	msg := message.NewMessage(watermill.NewUUID(), payload)
 	bm.pub.Publish("balance", msg)
 	// TODO: 为什么这里总是空的
