@@ -32,7 +32,8 @@ func newBalanceManager(pub Publisher) *balanceManager {
 // NOTICE: 并没有核查 bm 内资产的 total，有可能 total 是负值
 func (bm *balanceManager) update(as ...exch.Asset) {
 	bm.balance.Add(as...)
-	msg := message.NewMessage(watermill.NewUUID(), bm.enc(*bm))
+	payload := bm.enc((*bm).balance)
+	msg := message.NewMessage(watermill.NewUUID(), payload)
 	bm.pub.Publish("balance", msg)
 	log.Println("balance:", bm.balance)
 }
