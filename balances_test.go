@@ -15,9 +15,16 @@ func getABalances() *Balance {
 }
 
 func Test_DecBalancesFunc(t *testing.T) {
-
 	Convey("测试 Balances 的 Decode 函数", t, func() {
 		expected := getABalances()
+		Convey("expected 应该符合预期", func() {
+			a1 := (*expected)["BTC"]
+			e1 := NewAsset("BTC", 100, 200)
+			So(a1, ShouldResemble, e1)
+			a2 := (*expected)["DOGE"]
+			e2 := NewAsset("DOGE", 900000000, 100000000)
+			So(a2, ShouldResemble, e2)
+		})
 		enc := EncFunc()
 		bs := enc(expected)
 		dec := DecBalanceFunc()
