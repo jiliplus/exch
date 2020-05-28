@@ -75,6 +75,7 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 			case <-ctx.Done():
 				log.Println("ctx.Done", ctx.Err())
 			case msg := <-ticks:
+				// TODO: pubSub 关闭后，msg 会收到 nil
 				tick := decTick(msg.Payload)
 				msg.Ack()
 				as := make([]exch.Asset, 0, 32)
