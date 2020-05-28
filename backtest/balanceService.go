@@ -14,6 +14,7 @@ import (
 // BalanceService 会在每天的凌晨零点零分零秒记录 balance 的总价值
 // prices 里面需要放好各种资产的价格，不要忘记 capital 的价格是 1
 func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, asset string) {
+	log.Println("进入 BalanceService...")
 	ticks, err := ps.Subscribe(ctx, "tick")
 	if err != nil {
 		panic(err)
@@ -26,6 +27,7 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 	}
 	decBal := exch.DecBalanceFunc()
 	go func() {
+		log.Println("进入 BalanceService go func ...")
 		// 创建模拟 clock
 		msg := <-ticks
 		tick := decTick(msg.Payload)
@@ -35,27 +37,32 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 		everyNewDay := clock.EveryDay(0, 0, 0)
 		// 另起一个 goroutine，更新 clock
 		go func() {
+			log.Println("进入 BalanceService 时钟 goroutine ...")
 			tks, _ := ps.Subscribe(ctx, "tick")
 			for msg := range tks {
 				tick := decTick(msg.Payload)
 				clock.SetOrPanic(tick.Date)
 				// 设置好了才确认
 				msg.Ack()
+				log.Println("将 BalanceService 的本地始终设置成了", tick.Date)
 			}
 		}()
 		//
 		go func() {
+			log.Println("进入 BalanceService 帐户记录 goroutine ...")
 			var msg *message.Message
 			var bal *exch.Balance
 			bs := make([]balanceSnap, 0, 2048)
 			ok := true
 			for ok {
+				log.Println("进入 BalanceService 帐户记录 for ...")
 				select {
 				case <-ctx.Done():
 					log.Fatalln("BalanceService Down: ", ctx.Err())
 				case msg, ok = <-ticks:
 					tick := decTick(msg.Payload)
 					prices[asset] = tick.Price
+					msg.Ack()
 				case msg = <-balances:
 					bal = decBal(msg.Payload)
 					msg.Ack()
