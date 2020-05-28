@@ -1,6 +1,8 @@
 package backtest
 
 import (
+	"log"
+
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/jujili/exch"
@@ -32,4 +34,5 @@ func (bm *balanceManager) update(as ...exch.Asset) {
 	bm.balance.Add(as...)
 	msg := message.NewMessage(watermill.NewUUID(), bm.enc(*bm))
 	bm.pub.Publish("balance", msg)
+	log.Println("balance:", bm.balance)
 }
