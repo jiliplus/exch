@@ -58,7 +58,9 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 				bal = decBal(msg.Payload)
 				msg.Ack()
 			case date := <-everyNewDay:
-				bs = append(bs, newBalanceSnap(date, bal, prices))
+				newBal := newBalanceSnap(date, bal, prices)
+				bs = append(bs, newBal)
+				log.Println(date, newBal)
 			}
 		}
 		fmt.Println(bs)
