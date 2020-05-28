@@ -19,10 +19,9 @@ type balanceManager struct {
 	enc     func(interface{}) []byte
 }
 
-func newBalanceManager(pub Publisher) *balanceManager {
-	b := exch.NewBalances()
+func newBalanceManager(pub Publisher, bal exch.Balance) *balanceManager {
 	return &balanceManager{
-		Balance: b,
+		Balance: bal,
 		pub:     pub,
 		enc:     exch.EncFunc(),
 	}

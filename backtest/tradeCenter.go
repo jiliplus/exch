@@ -69,7 +69,7 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 	decTick := exch.DecTickFunc()
 
 	go func() {
-		bm := newBalanceManager(ps)
+		bm := newBalanceManager(ps, balance)
 		for {
 			select {
 			case <-ctx.Done():
