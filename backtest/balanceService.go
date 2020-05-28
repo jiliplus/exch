@@ -29,6 +29,7 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 		// 创建模拟 clock
 		msg := <-ticks
 		tick := decTick(msg.Payload)
+		msg.Ack()
 		prices[asset] = tick.Price
 		clock := clock.NewSimulator(tick.Date)
 		everyNewDay := clock.EveryDay(0, 0, 0)
