@@ -34,15 +34,16 @@ func DecBalanceFunc() func(bs []byte) *Balance {
 }
 
 // Add change *Balance with a slice of Asset
-func (b *Balance) Add(as ...Asset) {
+func (b Balance) Add(as ...Asset) Balance {
 	for _, a := range as {
-		old, ok := (*b)[a.Name]
+		old, ok := b[a.Name]
 		if ok {
-			(*b)[a.Name] = old.Add(a)
+			b[a.Name] = old.Add(a)
 		} else {
-			(*b)[a.Name] = a
+			b[a.Name] = a
 		}
 	}
+	return b
 }
 
 // Total count the total value of balance
