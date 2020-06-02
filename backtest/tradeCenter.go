@@ -86,6 +86,9 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 				tick := decTick(msg.Payload)
 				msg.Ack()
 				as := make([]exch.Asset, 0, 32)
+				if !buys.canMatch(tick.Price) {
+					log.Println("!buys.canMatch", buys, tick)
+				}
 				as = append(as, buys.match(tick)...)
 				as = append(as, sells.match(tick)...)
 				if len(as) > 0 {

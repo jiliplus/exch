@@ -1,6 +1,8 @@
 package backtest
 
-import "github.com/jujili/exch"
+import (
+	"github.com/jujili/exch"
+)
 
 type orderList struct {
 	head *order
