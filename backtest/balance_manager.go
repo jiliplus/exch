@@ -1,8 +1,6 @@
 package backtest
 
 import (
-	"log"
-
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/jujili/exch"
@@ -34,5 +32,5 @@ func (bm *balanceManager) update(as ...exch.Asset) {
 	msg := message.NewMessage(watermill.NewUUID(), payload)
 	go bm.pub.Publish("balance", msg)
 	// TODO: 为什么这里总是空的
-	log.Println("balance:", bm.Balance)
+	// log.Println("balance:", bm.Balance)
 }
