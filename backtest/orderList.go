@@ -1,6 +1,8 @@
 package backtest
 
 import (
+	"log"
+
 	"github.com/jujili/exch"
 )
 
@@ -76,6 +78,7 @@ func (l *orderList) match(tick exch.Tick) []exch.Asset {
 	// 防止把 for 循环前的 order 添加进来了
 	// if order.Type != 0 {
 	if !order.IsEmpty() {
+		log.Println("order is NOT Empty, push in", order)
 		l.push(&order) // order 此时有可能是空订单
 	}
 	return res
