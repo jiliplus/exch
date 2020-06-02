@@ -70,19 +70,29 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 
 	go func() {
 		bm := newBalanceManager(ps, balance)
-		for {
+		count := 0
+		for count < 2 {
 			select {
 			case <-ctx.Done():
 				log.Println("ctx.Done", ctx.Err())
-			case msg := <-ticks:
-				// TODO: pubSub 关闭后，msg 会收到 nil
+			case msg, ok := <-ticks:
+				if !ok {
+					count++
+					ticks = nil
+					continue
+				}
 				tick := decTick(msg.Payload)
 				msg.Ack()
 				as := make([]exch.Asset, 0, 32)
 				as = append(as, buys.match(tick)...)
 				as = append(as, sells.match(tick)...)
 				bm.update(as...)
-			case msg := <-orders:
+			case msg, ok := <-orders:
+				if !ok {
+					count++
+					orders = nil
+					continue
+				}
 				order := decOrder(msg.Payload)
 				msg.Ack()
 				if order.Side == exch.BUY {
@@ -90,15 +100,17 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 				} else {
 					bm.update(sells.push(order))
 				}
-			case msg := <-cancelAllOrders:
-				msg.Ack()
-				for !buys.isEmpty() {
-					bm.update(buys.pop().cancel2Free())
-				}
-				for !sells.isEmpty() {
-					bm.update(sells.pop().cancel2Free())
-				}
+				// TODO: 添加取消订单的功能
+				// case msg := <-cancelAllOrders:
+				// msg.Ack()
+				// for !buys.isEmpty() {
+				// bm.update(buys.pop().cancel2Free())
+				// }
+				// for !sells.isEmpty() {
+				// bm.update(sells.pop().cancel2Free())
+				// }
 			}
 		}
+		log.Println("backtest center is over")
 	}()
 }

@@ -50,6 +50,7 @@ func TickBarService(ctx context.Context, ps Pubsub, interval time.Duration) {
 				}
 				ps.Publish(topic, msgs...)
 				if !ok {
+					log.Println("tickBarService is over")
 					return
 				}
 			}

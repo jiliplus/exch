@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/jujili/clock"
 	"github.com/jujili/exch"
 )
@@ -45,27 +44,34 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 				clock.SetOrPanic(tick.Date)
 				// log.Println("将 BalanceService 的本地始终设置成了", tick.Date)
 			}
+			log.Println("balance service, ticks end, not update clock")
 		}()
 		//
 		go func() {
 			log.Println("进入 BalanceService 帐户记录 goroutine ...")
-			var msg *message.Message
 			var bal *exch.Balance
 			bs := make([]balanceSnap, 0, 2048)
-			ok := true
-			for ok {
+			count := 0
+			for count < 2 {
 				// log.Println("进入 BalanceService 帐户记录 for ...")
 				select {
 				case <-ctx.Done():
 					log.Fatalln("BalanceService Down: ", ctx.Err())
-				case msg, ok = <-ticks:
+				case msg, ok := <-ticks:
 					if !ok {
-						goto END
+						count++
+						ticks = nil
+						continue
 					}
 					tick := decTick(msg.Payload)
 					msg.Ack()
 					prices[asset] = tick.Price
-				case msg = <-balances:
+				case msg, ok := <-balances:
+					if !ok {
+						count++
+						balances = nil
+						continue
+					}
 					bal = decBal(msg.Payload)
 					msg.Ack()
 				case date := <-everyNewDay:
@@ -74,7 +80,7 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 					log.Println("\t", date, newBal, prices)
 				}
 			}
-		END:
+			fmt.Println("all balance snap is")
 			fmt.Println(bs)
 		}()
 	}()
