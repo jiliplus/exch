@@ -37,18 +37,21 @@ func TickBarService(ctx context.Context, ps Pubsub, interval time.Duration) {
 			case <-ctx.Done():
 				log.Fatalln("TickBarService Down: ", ctx.Err())
 			case msg, ok := <-ticks:
-				msg.Ack()
 				if !ok {
 					bars = gtb(exch.NilTick)
 				} else {
 					tick := decTick(msg.Payload)
 					bars = gtb(tick)
+					msg.Ack()
 				}
 				msgs := make([]*message.Message, 0, len(bars))
 				for _, bar := range bars {
 					msgs = append(msgs, message.NewMessage(watermill.NewUUID(), enc(bar)))
 				}
 				ps.Publish(topic, msgs...)
+				if !ok {
+					return
+				}
 			}
 		}
 	}()
