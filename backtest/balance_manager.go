@@ -32,7 +32,7 @@ func (bm *balanceManager) update(as ...exch.Asset) {
 	bm.Balance = bm.Balance.Add(as...)
 	payload := bm.enc(bm.Balance)
 	msg := message.NewMessage(watermill.NewUUID(), payload)
-	bm.pub.Publish("balance", msg)
+	go bm.pub.Publish("balance", msg)
 	// TODO: 为什么这里总是空的
 	log.Println("balance:", bm.Balance)
 }

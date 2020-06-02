@@ -44,10 +44,11 @@ func TickBarService(ctx context.Context, ps Pubsub, interval time.Duration) {
 					tick := decTick(msg.Payload)
 					bars = gtb(tick)
 				}
+				msgs := make([]*message.Message, 0, len(bars))
 				for _, bar := range bars {
-					msg := message.NewMessage(watermill.NewUUID(), enc(bar))
-					ps.Publish(topic, msg)
+					msgs = append(msgs, message.NewMessage(watermill.NewUUID(), enc(bar)))
 				}
+				ps.Publish(topic, msgs...)
 			}
 		}
 	}()

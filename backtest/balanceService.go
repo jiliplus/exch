@@ -41,10 +41,9 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 			tks, _ := ps.Subscribe(ctx, "tick")
 			for msg := range tks {
 				tick := decTick(msg.Payload)
-				clock.SetOrPanic(tick.Date)
-				// 设置好了才确认
 				msg.Ack()
-				log.Println("将 BalanceService 的本地始终设置成了", tick.Date)
+				clock.SetOrPanic(tick.Date)
+				// log.Println("将 BalanceService 的本地始终设置成了", tick.Date)
 			}
 		}()
 		//
@@ -55,23 +54,27 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 			bs := make([]balanceSnap, 0, 2048)
 			ok := true
 			for ok {
-				log.Println("进入 BalanceService 帐户记录 for ...")
+				// log.Println("进入 BalanceService 帐户记录 for ...")
 				select {
 				case <-ctx.Done():
 					log.Fatalln("BalanceService Down: ", ctx.Err())
 				case msg, ok = <-ticks:
+					if !ok {
+						goto END
+					}
 					tick := decTick(msg.Payload)
-					prices[asset] = tick.Price
 					msg.Ack()
+					prices[asset] = tick.Price
 				case msg = <-balances:
 					bal = decBal(msg.Payload)
 					msg.Ack()
 				case date := <-everyNewDay:
 					newBal := newBalanceSnap(date, bal, prices)
 					bs = append(bs, newBal)
-					log.Println(date, newBal)
+					log.Println("\t", date, newBal, prices)
 				}
 			}
+		END:
 			fmt.Println(bs)
 		}()
 	}()
