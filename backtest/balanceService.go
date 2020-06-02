@@ -80,8 +80,8 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 					log.Println("\t", date, newBal, prices)
 				}
 			}
-			fmt.Println("all balance snap is")
-			fmt.Println(bs)
+			log.Println("all balance snap is")
+			log.Println(bs)
 		}()
 	}()
 }
@@ -96,4 +96,8 @@ func newBalanceSnap(date time.Time, balance *exch.Balance, prices map[string]flo
 		date:   date,
 		amount: balance.Total(prices),
 	}
+}
+
+func (bs balanceSnap) String() string {
+	return fmt.Sprintf("%s, %f\n", bs.date, bs.amount)
 }
