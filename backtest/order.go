@@ -3,6 +3,7 @@ package backtest
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"math"
 
 	"github.com/jujili/exch"
@@ -14,6 +15,10 @@ type order struct {
 	exch.Order
 	// 指向下一个挂单
 	next *order
+}
+
+func (o order) String() string {
+	return fmt.Sprintf("%s->%s", o.Order, o.next)
 }
 
 // DecOrderFunc 返回的函数会把序列化成 []byte 的 Order 值转换回来

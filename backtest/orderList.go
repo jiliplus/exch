@@ -8,16 +8,19 @@ type orderList struct {
 	head *order
 }
 
+func (ol orderList) String() string {
+	if ol.head.next == nil {
+		return "[[EMPTY orderList]]"
+	}
+	return ol.head.next.String()
+}
+
 func newOrderList() *orderList {
 	return &orderList{
 		// 因为根本不会查看 head 内部的数据
 		// head 完全可以是一个空的
 		head: &order{},
 	}
-}
-
-func (l *orderList) isEmpty() bool {
-	return l.head.next == nil
 }
 
 func (l *orderList) push(a *order) exch.Asset {
@@ -48,6 +51,10 @@ func (l *orderList) pop() *order {
 	curr, res := l.head, l.head.next
 	curr.next, res.next = res.next, nil
 	return res
+}
+
+func (l *orderList) isEmpty() bool {
+	return l.head.next == nil
 }
 
 func (l *orderList) canMatch(price float64) bool {

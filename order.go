@@ -3,6 +3,7 @@ package exch
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"time"
 )
 
@@ -86,6 +87,13 @@ type Order struct {
 	AssetQuantity   float64
 	AssetPrice      float64
 	CapitalQuantity float64
+}
+
+func (o Order) String() string {
+	acid := fmt.Sprintf("[%s-%s:%d]", o.AssetName, o.CapitalName, o.ID)
+	st := fmt.Sprintf("[S:%s,T:%s]", o.Side, o.Type)
+	aac := fmt.Sprintf("[%f:%f:%f]", o.AssetQuantity, o.AssetPrice, o.CapitalQuantity)
+	return acid + st + aac
 }
 
 // NewOrder returns a order with default Symbol, Asset, Capital.
