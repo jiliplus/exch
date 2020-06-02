@@ -8,11 +8,11 @@ type orderList struct {
 	head *order
 }
 
-func (ol orderList) String() string {
-	if ol.head.next == nil {
+func (l orderList) String() string {
+	if l.head.next == nil {
 		return "[[EMPTY orderList]]"
 	}
-	return ol.head.next.String()
+	return l.head.next.String()
 }
 
 func newOrderList() *orderList {
