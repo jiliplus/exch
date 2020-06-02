@@ -60,10 +60,10 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 	// 以便于删除单个订单。
 	// 所以，就只好全部都删除了算了。
 	// 但是全部删除也不是什么坏事。
-	cancelAllOrders, err := ps.Subscribe(ctx, "cancelAllOrders")
-	if err != nil {
-		panic(err)
-	}
+	// cancelAllOrders, err := ps.Subscribe(ctx, "cancelAllOrders")
+	// if err != nil {
+	// panic(err)
+	// }
 
 	decOrder := decOrderFunc()
 	decTick := exch.DecTickFunc()
