@@ -67,6 +67,10 @@ type Asset struct {
 	Free, Locked float64
 }
 
+func (a Asset) String() string {
+	return fmt.Sprintf("[%s:F%f:L%f]", a.Name, a.Free, a.Locked)
+}
+
 // NewAsset return new asset
 func NewAsset(name string, free, locked float64) Asset {
 	return Asset{
