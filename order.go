@@ -89,6 +89,11 @@ type Order struct {
 	CapitalQuantity float64
 }
 
+// IsEmpty 用于判断 Order 是否是空订单
+func (o Order) IsEmpty() bool {
+	return o.AssetQuantity == 0 && o.CapitalQuantity == 0
+}
+
 func (o Order) String() string {
 	acid := fmt.Sprintf("[%s-%s:%d]", o.AssetName, o.CapitalName, o.ID)
 	st := fmt.Sprintf("[S:%s,T:%s]", o.Side, o.Type)
