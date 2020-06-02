@@ -86,7 +86,9 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 				as := make([]exch.Asset, 0, 32)
 				as = append(as, buys.match(tick)...)
 				as = append(as, sells.match(tick)...)
-				bm.update(as...)
+				if len(as) > 0 {
+					bm.update(as...)
+				}
 			case msg, ok := <-orders:
 				if !ok {
 					count++
