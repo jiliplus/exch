@@ -87,14 +87,14 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 				msg.Ack()
 				as := make([]exch.Asset, 0, 32)
 				if !buys.isEmpty() {
-					log.Println("before match", buys, tick)
+					// log.Println("before match", buys, tick)
 					as = append(as, buys.match(tick)...)
-					log.Println("After  match", buys)
+					// log.Println("After  match", buys)
 				}
 				if !sells.isEmpty() {
-					log.Println("before match", sells, tick)
+					// log.Println("before match", sells, tick)
 					as = append(as, sells.match(tick)...)
-					log.Println("After  match", sells)
+					// log.Println("After  match", sells)
 				}
 				if len(as) > 0 {
 					bm.update(as...)
