@@ -70,6 +70,8 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 
 	go func() {
 		bm := newBalanceManager(ps, balance)
+		// 空更新一下，是为了能够让 balanceService 可以获取到 Balance 的数值
+		bm.update([]exch.Asset{}...)
 		count := 0
 		for count < 2 {
 			select {
