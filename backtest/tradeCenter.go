@@ -97,6 +97,12 @@ func NewBackTest(ctx context.Context, ps Pubsub, balance exch.Balance) {
 					// log.Println("After  match", sells)
 				}
 				if len(as) > 0 {
+					// 收取手续费
+					fee := 0.001 // 交易手续费
+					keep := 1 - fee
+					for i, a := range as {
+						as[i] = exch.NewAsset(a.Name, a.Free*keep, a.Locked*keep)
+					}
 					bm.update(as...)
 				}
 			case msg, ok := <-orders:
