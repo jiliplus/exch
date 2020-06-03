@@ -75,7 +75,7 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 					bal = decBal(msg.Payload)
 					msg.Ack()
 				case date := <-everyNewDay:
-					newBal := newBalanceSnap(date, bal, prices)
+					newBal := newBalanceSnap(date, bal, prices, asset)
 					bs = append(bs, newBal)
 					log.Println("\t", date, bal, prices, newBal)
 				}
@@ -89,15 +89,17 @@ func BalanceService(ctx context.Context, ps Pubsub, prices map[string]float64, a
 type balanceSnap struct {
 	date   time.Time
 	amount float64
+	price  float64
 }
 
-func newBalanceSnap(date time.Time, balance *exch.Balance, prices map[string]float64) balanceSnap {
+func newBalanceSnap(date time.Time, balance *exch.Balance, prices map[string]float64, asset string) balanceSnap {
 	return balanceSnap{
 		date:   date,
 		amount: balance.Total(prices),
+		price:  prices[asset],
 	}
 }
 
 func (bs balanceSnap) String() string {
-	return fmt.Sprintf("%s, %f\n", bs.date, bs.amount)
+	return fmt.Sprintf("%s, amount, %f, price, %f\n", bs.date, bs.amount, bs.price)
 }
